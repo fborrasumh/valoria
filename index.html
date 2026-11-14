@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0F2237">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data: blob:; media-src blob: data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="author" content="Fernando Borrás Rocher; Elena Caride Miana">
+<meta name="description" content="ValorIA convierte la exploración facial por tercios y por capas (piel, grasa, músculo y hueso), en reposo y con el gesto, en un plan por fases: soporte, gesto y contorno, y piel. Con escalas de Fitzpatrick, Glogau y gravedad 0-4, la regla de tratar el soporte antes que el surco, las zonas de riesgo de cada técnica, presupuesto y dos documentos en Word: el plan para la paciente, en su idioma, y el informe de valoración. Lee la ficha de AnamnesIA. Sin IA y sin conexión.">
+<title>ValorIA · Del diagnóstico facial por tercios y por capas a un plan por fases</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --tinta:#0F2237; --acero:#2E4B6B; --acero-claro:#7C93AC; --gris:#5D7691;
+  --papel:#F3F6FA; --blanco:#FFFFFF; --linea:#D8E0E9; --linea-2:#E8EEF4;
+  --brasa:#E4572E; --brasa-osc:#C9441F; --brasa-suave:#FDEBE4;
+  --forjado:#0E7C6B; --forjado-suave:#E0F3EE; --aviso:#8A3617;
+  --c-ctx:#1F6FB2; --c-comp:#6B4FD8; --c-rda:#0E8C7A; --c-tema:#C98200; --c-eval:#E4572E; --c-final:#2E4B6B;
+  --sombra:0 1px 0 rgba(15,34,55,.05), 0 14px 34px -22px rgba(15,34,55,.45);
+  --sombra-alta:0 2px 0 rgba(15,34,55,.04), 0 22px 50px -24px rgba(15,34,55,.55);
+  --r:14px;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --texto:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:var(--texto);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+a{color:var(--acero)}
+:focus-visible{outline:3px solid var(--brasa);outline-offset:2px;border-radius:6px}
+.hidden{display:none!important}
+svg.i{width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+code{font-family:var(--mono);font-size:.85em;background:var(--linea-2);padding:1px 5px;border-radius:5px}
+
+/* Barra superior */
+.topbar{position:sticky;top:0;z-index:40;background:var(--tinta);color:#EAF1F7;box-shadow:0 6px 24px -14px rgba(0,0,0,.6)}
+.tb-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.logo{background:none;border:0;color:#fff;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.03em;cursor:pointer;padding:2px 4px;display:flex;align-items:center;gap:8px}
+.logo em{font-style:normal;color:var(--brasa)}
+.logo .anv{width:30px;height:30px;border-radius:9px;background:var(--brasa);display:grid;place-items:center;color:#fff}
+.stepper{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
+.sdot{display:flex;align-items:center;gap:7px;background:none;border:0;color:#8FA7BE;font:600 13px var(--texto);padding:6px;cursor:pointer;border-radius:10px;white-space:nowrap}
+.sdot:disabled{cursor:not-allowed;opacity:.45}
+.sdot .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:2px solid #3E5C7D;font-size:12px;color:#A9C0D4;transition:all .2s}
+.sdot .n svg{width:14px;height:14px}
+.sdot[data-state="done"] .n{background:var(--forjado);border-color:var(--forjado);color:#fff}
+.sdot[data-state="now"]{color:#fff}
+.sdot[data-state="now"] .n{background:var(--brasa);border-color:var(--brasa);color:#fff;box-shadow:0 0 0 4px rgba(228,87,46,.25)}
+.sdot:not(:disabled):hover{background:rgba(255,255,255,.06)}
+.sline{flex:0 1 26px;height:2px;background:#2F4A68;min-width:6px}
+.sline.on{background:var(--forjado)}
+.tb-tools{display:flex;gap:6px}
+.tb-btn{background:transparent;border:1px solid #3E5C7D;color:#C9D8E6;border-radius:9px;padding:6px 10px;font:600 13px var(--texto);cursor:pointer;display:flex;align-items:center;gap:6px}
+.tb-btn:hover{border-color:var(--brasa);color:#fff}
+.progress{height:4px;background:#1E3550}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brasa),#F59E0B);transition:width .4s}
+@media(max-width:960px){.sdot .lbl{display:none}.sdot[data-state="now"] .lbl{display:inline}}
+@media(max-width:720px){
+  .tb-in{flex-wrap:wrap;gap:8px}
+  .stepper{order:3;flex-basis:100%;justify-content:space-between}
+  .sdot[data-state="now"] .lbl{display:none}
+  .tb-btn .lbl{display:none}
+}
+
+/* Pantallas */
+main{max-width:1180px;margin:0 auto;padding:26px 16px 40px}
+.screen{display:none}
+.screen.on{display:block}
+@media(prefers-reduced-motion:no-preference){.screen.on{animation:rise .35s cubic-bezier(.2,.7,.3,1) both}@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
+.sh{display:flex;gap:18px;align-items:flex-start;margin:4px 0 22px}
+.sh-ico{width:64px;height:64px;border-radius:18px;background:var(--c,var(--brasa));color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 12px 24px -14px var(--c,var(--brasa))}
+.sh-ico svg{width:32px;height:32px}
+.sh-step{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--acero-claro);margin:4px 0}
+.sh h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.6vw,38px);letter-spacing:-.025em;line-height:1.05;margin:0 0 6px}
+.sh-lede{margin:0;color:var(--gris);font-size:16.5px;max-width:70ch}
+@media(max-width:600px){.sh-ico{width:48px;height:48px;border-radius:14px}.sh-ico svg{width:24px;height:24px}}
+
+.card{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);padding:20px;margin-bottom:18px}
+.card h3{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+.card h3 .num{width:26px;height:26px;border-radius:8px;background:var(--tinta);color:#fff;font:700 13px var(--mono);display:grid;place-items:center}
+.card .sub{margin:0 0 14px;color:var(--gris);font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:96px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}.sticky{position:static}}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+label,.lab{display:block;font-size:13.5px;font-weight:600;margin:0 0 6px;color:var(--acero)}
+label small,.lab small{font-weight:500;color:var(--acero-claro)}
+input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:11px 13px;border:1.5px solid var(--linea);border-radius:10px;font-family:var(--texto);font-size:15px;color:var(--tinta);background:#fff;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acero-claro);box-shadow:0 0 0 4px rgba(124,147,172,.18)}
+input.bad{border-color:var(--brasa);box-shadow:0 0 0 4px rgba(228,87,46,.15)}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+input::placeholder,textarea::placeholder{color:#9DB0C2}
+.field{margin-bottom:16px}
+.help{font-size:12.8px;color:var(--gris);margin:6px 0 0}
+.help b{color:var(--acero)}
+
+button{font-family:var(--texto);cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:11px;font-weight:600;font-size:15px;border:1.5px solid transparent;padding:11px 18px;transition:transform .08s,background .15s,border-color .15s;text-decoration:none;line-height:1.2}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--brasa);color:#fff;box-shadow:0 8px 18px -10px var(--brasa)}
+.btn-primary:hover{background:var(--brasa-osc)}
+.btn-big{font-size:17px;padding:14px 24px;border-radius:13px}
+.btn-dark{background:var(--tinta);color:#fff}
+.btn-dark:hover{background:#1c3656}
+.btn-ghost{background:#fff;border-color:var(--linea);color:var(--acero)}
+.btn-ghost:hover{border-color:var(--acero-claro);background:#F7FAFC}
+.btn-ok{background:var(--forjado);color:#fff}
+.btn-ok:hover{background:#0b6457}
+.btn-word{background:#2B579A;color:#fff}
+.btn-word:hover{background:#1e3f7a}
+.btn-sm{padding:7px 12px;font-size:13.5px;border-radius:9px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#fff;border:1.5px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:13.5px;color:var(--acero);cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.25;text-align:left}
+.chip:hover{border-color:var(--brasa);color:var(--brasa)}
+.chip[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.chip.mini-ex{font-size:12.5px;padding:4px 10px;border-style:dashed}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--linea);background:#fff;border-radius:9px;padding:7px 11px;font-size:13.5px;font-weight:600;color:var(--acero)}
+.seg button:hover{border-color:var(--acero-claro)}
+.seg button[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+
+.meto{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.meto button{text-align:left;background:#fff;border:1.5px solid var(--linea);border-radius:12px;padding:10px 12px;color:var(--tinta)}
+.meto button b{display:block;font-size:14px}
+.meto button span{display:block;font-size:12.3px;color:var(--gris);line-height:1.35;margin-top:2px}
+.meto button:hover{border-color:var(--acero-claro)}
+.meto button[aria-pressed="true"]{border-color:var(--tinta);box-shadow:0 0 0 2px var(--tinta);background:var(--papel)}
+
+.tip{display:flex;gap:12px;background:#FFF8E6;border:1px solid #F3DDA0;border-radius:12px;padding:13px 15px;font-size:14px;color:#6B4E00;margin-bottom:18px}
+.tip svg{width:22px;height:22px;color:#C98200;flex:none;margin-top:1px}
+.tip strong{color:#523B00}
+.aviso{background:var(--brasa-suave);border:1px solid #F3C7B5;border-radius:12px;padding:13px 15px;font-size:14px;color:var(--aviso);margin-bottom:16px}
+.okbox{background:var(--forjado-suave);border:1px solid #A9DCCF;border-radius:12px;padding:13px 15px;font-size:14px;color:#0B5A4E;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* Inicio */
+.hero{background:var(--tinta);color:#EAF1F7;border-radius:22px;padding:40px 36px;position:relative;overflow:hidden;margin-bottom:26px;box-shadow:var(--sombra-alta)}
+.hero::before{content:"";position:absolute;right:-80px;top:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(228,87,46,.55),transparent 65%)}
+.hero::after{content:"";position:absolute;left:30%;bottom:-140px;width:420px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(14,140,122,.35),transparent 65%)}
+.hero>*{position:relative;z-index:1}
+@media(max-width:600px){.hero{padding:28px 20px;border-radius:18px}}
+.eyebrow{font:600 11.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#8FA7BE;margin:0 0 14px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5.4vw,58px);line-height:.98;letter-spacing:-.035em;margin:0 0 16px;max-width:17ch}
+.hero h1 em{font-style:normal;color:var(--brasa)}
+.hero p.lede{max-width:62ch;font-size:18px;color:#C3D3E2;margin:0 0 24px}
+.hero .actions .btn-ghost{background:transparent;color:#fff;border-color:#4A6787}
+.hero .actions .btn-ghost:hover{border-color:#fff}
+.draft{margin-top:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14.5px}
+.sec-title{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 6px}
+.sec-sub{color:var(--gris);margin:0 0 16px}
+.journey{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.jstop{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;position:relative}
+.jstop .ji{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--c);margin-bottom:10px}
+.jstop .ji svg{width:20px;height:20px}
+.jstop b{display:block;font-size:15px;margin-bottom:2px}
+.jstop span{display:block;font-size:13px;color:var(--gris);line-height:1.45}
+.jstop .jn{position:absolute;top:12px;right:14px;font:700 12px var(--mono);color:var(--acero-claro)}
+@media(max-width:900px){.journey{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.journey{grid-template-columns:1fr}}
+
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.part{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 14px}
+.part .pi{width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;flex:none}
+.part b{display:block;font-size:14.5px}
+.part span{display:block;font-size:12.8px;color:var(--gris);line-height:1.4}
+
+.examples{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.excard{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--sombra);position:relative;overflow:hidden;text-align:left;font:inherit;color:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.excard:hover{transform:translateY(-3px);box-shadow:var(--sombra-alta)}
+.excard::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:var(--c)}
+.excard .emo{font-size:32px;line-height:1}
+.excard .area{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--acero-claro)}
+.excard b{font-family:var(--display);font-size:18px;letter-spacing:-.01em;line-height:1.15}
+.excard p{margin:0;font-size:13.5px;color:var(--gris);flex:1}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);border-radius:999px;padding:3px 9px;align-self:flex-start}
+
+/* Clave */
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1;font-family:var(--mono);font-size:14px}
+.eye{width:46px;flex:none;border:1.5px solid var(--linea);background:#fff;border-radius:10px;color:var(--acero);display:grid;place-items:center}
+.light{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--papel);margin-top:14px;font-size:14.5px;font-weight:600}
+.light .bulbo{width:14px;height:14px;border-radius:50%;background:#B8C5D3;box-shadow:0 0 0 4px rgba(184,197,211,.3);flex:none}
+.light[data-s="ok"] .bulbo{background:#16A34A;box-shadow:0 0 0 4px rgba(22,163,74,.22)}
+.light[data-s="err"] .bulbo{background:var(--brasa);box-shadow:0 0 0 4px rgba(228,87,46,.22)}
+.light[data-s="wait"] .bulbo{background:#F59E0B;box-shadow:0 0 0 4px rgba(245,158,11,.25)}
+.olsteps{list-style:none;padding:0;margin:0;counter-reset:o;display:flex;flex-direction:column;gap:12px}
+.olsteps li{counter-increment:o;display:flex;gap:12px;font-size:14.5px;align-items:flex-start}
+.olsteps li::before{content:counter(o);width:28px;height:28px;border-radius:50%;background:var(--brasa-suave);color:var(--brasa);font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+
+/* Acordeones */
+.acc{background:#fff;border:1px solid var(--linea);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--sombra);overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;gap:12px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary .ai{width:36px;height:36px;border-radius:10px;background:var(--papel);color:var(--acero);display:grid;place-items:center;flex:none}
+.acc[open]>summary .ai{background:var(--tinta);color:#fff}
+.acc>summary b{font-family:var(--display);font-size:17px;display:block}
+.acc>summary small{display:block;color:var(--gris);font-size:13px}
+.acc>summary .chev{margin-left:auto;transition:transform .2s;color:var(--acero-claro)}
+.acc[open]>summary .chev{transform:rotate(180deg)}
+.acc .inner{padding:4px 18px 18px;border-top:1px solid var(--linea-2)}
+.acc .inner>*:first-child{margin-top:14px}
+.prompt-ta{font-family:var(--mono);font-size:12.3px;min-height:130px;background:#FBFDFE}
+
+/* Resumen lateral */
+.sum h3{margin-bottom:10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat{background:var(--papel);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font:800 24px var(--display);letter-spacing:-.02em;line-height:1.1}
+.stat span{font-size:12.3px;color:var(--gris)}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.checks li{display:flex;gap:9px;align-items:center;color:var(--gris)}
+.checks li .ck{width:20px;height:20px;border-radius:50%;border:2px solid var(--linea);display:grid;place-items:center;flex:none}
+.checks li.on{color:var(--tinta)}
+.checks li.on .ck{background:var(--forjado);border-color:var(--forjado);color:#fff}
+.checks li .ck svg{width:12px;height:12px}
+.docname{margin-top:14px;padding:11px 13px;border-radius:11px;background:var(--tinta);color:#C3D3E2;font-size:13.5px}
+.docname b{color:#fff}
+
+/* Generación */
+.agents{display:flex;flex-direction:column;gap:10px}
+.agent{background:#fff;border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden;transition:border-color .2s}
+.agent-h{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+.agent .ai{width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;flex:none;transition:all .2s}
+.agent .ai svg{width:20px;height:20px}
+.agent-t{flex:1;min-width:0}
+.agent-t b{display:block;font-family:var(--display);font-size:16.5px}
+.agent-t span{display:block;font-size:13px;color:var(--gris)}
+.pill{font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--linea-2);color:var(--gris);white-space:nowrap}
+.agent[data-s="run"]{border-color:#F59E0B}
+.agent[data-s="run"] .ai{background:var(--c);color:#fff;animation:pulse 1s infinite alternate}
+.agent[data-s="run"] .pill{background:#FFF1D6;color:#8A5A00}
+.agent[data-s="ok"] .ai{background:var(--c);color:#fff}
+.agent[data-s="ok"] .pill{background:var(--forjado-suave);color:var(--forjado)}
+.agent[data-s="err"]{border-color:var(--brasa)}
+.agent[data-s="err"] .pill{background:var(--brasa-suave);color:var(--brasa)}
+.agent-b{display:none;padding:4px 18px 16px 72px;font-size:14px;border-top:1px solid var(--linea-2);background:#FBFDFE}
+.agent.open .agent-b{display:block}
+@media(max-width:600px){.agent-b{padding-left:18px}}
+@keyframes pulse{from{transform:scale(1);box-shadow:0 0 0 0 rgba(228,87,46,.5)}to{transform:scale(1.06);box-shadow:0 0 0 10px rgba(228,87,46,0)}}
+.forging{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--tinta);color:#fff;margin-bottom:16px}
+.forging .spark{width:44px;height:44px;border-radius:12px;background:var(--brasa);display:grid;place-items:center;flex:none;animation:pulse 1s infinite alternate}
+.forging.done .spark{background:var(--forjado);animation:none}
+.forging.err .spark{animation:none}
+.forging b{font-family:var(--display);font-size:18px;display:block}
+.forging span{font-size:14px;color:#C3D3E2}
+.mini-list{margin:10px 0 0;padding:0;list-style:none}
+.mini-list li{padding:5px 0;border-bottom:1px solid var(--linea-2)}
+.mini-list li:last-child{border-bottom:0}
+.code{display:inline-block;font:700 11px var(--mono);border-radius:5px;padding:1px 6px;margin-right:6px;background:var(--linea-2);color:var(--acero)}
+
+/* Guía */
+.res-head{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.res-head h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;margin:0;flex:1;min-width:240px;line-height:1.1}
+.doc{background:#fff;border:1px solid var(--linea);border-radius:18px;box-shadow:var(--sombra-alta);padding:40px 44px;max-width:900px;margin:0 auto}
+@media(max-width:700px){.doc{padding:22px 16px}}
+.doc-h{border-bottom:3px solid var(--tinta);padding-bottom:18px;margin-bottom:26px}
+.doc-kind{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brasa);margin:0 0 6px}
+.doc-h h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.025em;line-height:1.05;margin:0 0 12px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta span{font-size:12.8px;font-weight:600;background:var(--papel);color:var(--acero);border-radius:999px;padding:4px 11px}
+.dsec{margin-bottom:28px}
+.dsec h2{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.dsec h2 .num{width:28px;height:28px;border-radius:8px;background:var(--tinta);color:#fff;font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+.dsec p{margin:0 0 10px;max-width:75ch}
+.sublab{font-size:13px;font-weight:700;color:var(--acero-claro);margin:14px 0 6px}
+.row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--linea-2);font-size:14.5px;align-items:flex-start}
+.row:last-child{border-bottom:0}
+.row .code{margin-top:2px;flex:none}
+.code.cg{background:#E6F0FA;color:var(--c-ctx)}
+.code.ce{background:#EEEAFB;color:var(--c-comp)}
+.code.bl{background:var(--forjado-suave);color:var(--forjado)}
+.code.tm{background:var(--tinta);color:#fff}
+.row .hrs{margin-left:auto;font-size:12.5px;color:var(--gris);white-space:nowrap}
+.blk{font-weight:700;margin:16px 0 4px;display:flex;gap:8px;align-items:baseline}
+.blk small{font-weight:500;color:var(--gris)}
+.tbl-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{background:var(--tinta);color:#fff;text-align:left;padding:9px 11px;font-size:12.5px;font-weight:700}
+table.t td{padding:9px 11px;border-bottom:1px solid var(--linea-2);vertical-align:top}
+table.t tr:nth-child(even) td{background:#FAFCFE}
+.peso{font-weight:800;color:var(--brasa);white-space:nowrap}
+.note{margin-top:12px;padding:11px 14px;background:var(--papel);border-left:4px solid var(--forjado);border-radius:8px;font-size:14px}
+.demo-flag{background:#FFF8E6;border:1px solid #F3DDA0;color:#6B4E00;border-radius:12px;padding:11px 15px;font-size:14px;margin:0 auto 16px;max-width:900px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.demo-flag svg{color:#C98200}
+
+/* Navegación inferior */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--linea)}
+.bn-in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.bn-hint{flex:1;text-align:center;font-size:14px;color:var(--gris)}
+.bn-hint b{color:var(--tinta)}
+@media(max-width:600px){.bn-hint{display:none}.bn-in{justify-content:space-between}}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(15,34,55,.55);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}
+.modal.on{display:flex}
+.modal-box{background:#fff;border-radius:18px;max-width:760px;width:100%;box-shadow:var(--sombra-alta);overflow:hidden}
+.modal-head{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--tinta);color:#fff}
+.modal-head h2{font-family:var(--display);font-size:22px;margin:0;flex:1}
+.modal-head button{background:transparent;border:1px solid #4A6787;color:#fff;border-radius:9px;padding:6px 10px}
+.modal-body{padding:18px 20px 22px}
+.glos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.glos{grid-template-columns:1fr}}
+.glos div{background:var(--papel);border-radius:12px;padding:12px 14px}
+.glos b{display:block;font-family:var(--display);font-size:16px;margin-bottom:2px}
+.glos span{font-size:13.8px;color:var(--acero)}
+.hist{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--linea);border-radius:12px;margin-bottom:8px}
+.hist-t{flex:1;min-width:0;cursor:pointer}
+.hist-t b{display:block;font-size:15px}
+.hist-t span{font-size:12.8px;color:var(--gris)}
+.hist:hover{border-color:var(--acero-claro)}
+.iconbtn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--linea);background:#fff;color:var(--acero);display:grid;place-items:center;padding:0}
+.iconbtn:hover{border-color:var(--brasa);color:var(--brasa)}
+.empty{text-align:center;color:var(--gris);padding:30px 10px}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--tinta);color:#fff;padding:11px 18px;border-radius:12px;font-size:14.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:90vw;text-align:center;box-shadow:var(--sombra-alta)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+footer{max-width:1180px;margin:0 auto;padding:0 16px 30px;font-size:13px;color:#6E8299}
+footer hr{border:0;border-top:1px solid var(--linea);margin:0 0 14px}
+
+@media print{
+  body{background:#fff;padding:0}
+  .topbar,.bottomnav,.res-head,.demo-flag,.okbox,footer,.toast,.modal{display:none!important}
+  main{padding:0;max-width:none}
+  .screen{display:none!important}
+  
+  .doc{box-shadow:none;border:0;padding:0;max-width:none}
+  .dsec{break-inside:avoid-page}
+  table.t th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+/* ══ v2 ══ */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.grid3{grid-template-columns:1fr}}
+.feats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:960px){.feats{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.feats{grid-template-columns:1fr}}
+.feat{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;border-top:4px solid var(--c)}
+.feat .pi{width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;margin-bottom:10px}
+.feat b{display:block;font-family:var(--display);font-size:17px;margin-bottom:3px}
+.feat span{display:block;font-size:13.5px;color:var(--gris);line-height:1.45}
+.importbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--tinta);color:#EAF1F7;border-radius:var(--r);padding:14px 16px;margin-bottom:18px}
+.importbar .pi{width:40px;height:40px;border-radius:11px;background:var(--brasa);display:grid;place-items:center;flex:none}
+.importbar b{display:block;font-size:15px}
+.importbar span{display:block;font-size:13.3px;color:#A9C0D4}
+.importbar .btn-dark{background:#fff;color:var(--tinta)}
+.importbar .btn-dark:hover{background:#EAF1F7}
+.inacc{border-top:1px solid var(--linea-2);margin-top:4px;padding-top:12px}
+.inacc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--acero)}
+.inacc>summary::-webkit-details-marker{display:none}
+.inacc>summary .chev{margin-left:auto;transition:transform .2s;color:var(--acero-claro)}
+.inacc[open]>summary .chev{transform:rotate(180deg)}
+.rec{display:inline-block;font:700 11px var(--texto);background:var(--forjado-suave);color:var(--forjado);border-radius:999px;padding:2px 8px;vertical-align:2px;margin-left:4px}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:560px){.checkgrid{grid-template-columns:1fr}}
+.checkgrid label{display:flex;gap:9px;align-items:center;margin:0;padding:9px 11px;border-radius:10px;background:var(--papel);font-weight:500;color:var(--tinta);cursor:pointer;font-size:14px}
+.checkgrid input{width:18px;height:18px;accent-color:var(--forjado);margin:0}
+.checkgrid label:has(input:checked){background:var(--forjado-suave)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border:2px dashed var(--linea);border-radius:14px;padding:24px;cursor:pointer;color:var(--acero);margin:0;font-weight:500}
+.drop svg{width:30px;height:30px;color:var(--brasa)}
+.drop b{font-size:15px;color:var(--tinta)}
+.drop span{font-size:13px;color:var(--gris)}
+.drop.over,.drop:hover{border-color:var(--brasa);background:var(--brasa-suave)}
+
+
+
+/* selector de idioma (65-i18n) */
+.tb-lang{display:flex;align-items:center}.tb-sel{background:transparent;border:1px solid #3E5C7D;color:#C9D8E6;border-radius:9px;padding:6px 8px;font:600 13px var(--texto);cursor:pointer;max-width:120px}.tb-sel:hover{border-color:var(--brasa);color:#fff}.tb-sel:focus-visible{outline:2px solid var(--brasa);outline-offset:2px}.tb-sel option{color:#0F2237;background:#fff}
+/* ══ Estilos propios de la app (se añaden a forja-base.css). Prefijo fa- para no chocar con clases de Forja ══ */
+.logo .anv{background:linear-gradient(135deg,var(--brasa),#C98200)}
+.hero{padding:44px 38px 30px}.hero h1{max-width:20ch}.fa-inicio{margin:14px 0 0;font-size:14px;color:#C3D3E2}.fa-inicio:empty{display:none}.fa-inicio b{color:#fff}
+/* autores con ORCID */
+.fa-autores{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.14)}.fa-autores-cap{font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#8FA7BE;width:100%;margin-bottom:-4px}
+.fa-autor{display:flex;gap:11px;align-items:center}.fa-autor b{display:block;color:#fff;font:700 16px var(--display)}.fa-autor small{display:block;color:#9DB6CD;font-size:12.5px;max-width:34ch}.fa-av{width:44px;height:44px;border-radius:14px;background:var(--c);color:#fff;display:grid;place-items:center;font:800 15px var(--display);flex:none;box-shadow:0 10px 20px -12px var(--c)}.fa-x{font:300 26px var(--display);color:#5D7C9B}
+.fa-orcid{display:block;margin-top:2px;font:600 11.5px var(--mono);letter-spacing:.02em;color:#7FD6C4!important;text-decoration:none}.fa-orcid:hover{text-decoration:underline}.fa-idea{width:100%;margin:2px 0 0;font-size:13px;color:#9DB6CD;max-width:72ch}
+/* zonas «dónde va cada cosa» */
+.zonas{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.zonas{grid-template-columns:1fr}}.zona{border-radius:16px;padding:14px 16px;border:2px solid}.zona.l{border-color:#9FD9C4;background:var(--forjado-suave)}.zona.n{border-color:#E9C46A;background:#FFF8E6}.zona h4{margin:0 0 6px;font-family:var(--display);font-size:18px}.zona ul{margin:0;padding-left:18px;font-size:14px;line-height:1.7}
+.sec-title+.zonas,.sec-title+.journey{margin-top:14px}
+/* formularios y utilidades */
+.field input[type=text],.field input[type=number],.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--linea);border-radius:10px;font:15px var(--texto);background:#fff;color:var(--tinta)}.field textarea{line-height:1.55;resize:vertical}.field label{display:block;font:700 13px var(--texto);color:var(--acero);margin-bottom:5px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brasa);box-shadow:0 0 0 3px rgba(228,87,46,.18)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid3,.grid2{grid-template-columns:1fr}}
+.card .actions{margin-top:12px}.card h3{margin-top:0}.fa-chk{display:flex;gap:8px;align-items:center;font:500 14.5px var(--texto);cursor:pointer}
+.fa-chip{display:inline-block;font:700 11.5px var(--texto);border-radius:999px;padding:3px 10px;background:var(--linea-2);color:var(--acero)}.fa-chip.ok{background:var(--forjado-suave);color:#0B5A4E}.fa-chip.aviso{background:#FFF1D6;color:#7A4B00}.fa-chip.error{background:var(--brasa-suave);color:var(--aviso)}
+.fa-pre{white-space:pre-wrap;font:12.5px/1.5 var(--mono);background:#0B1C2E;color:#D6E4F0;border-radius:12px;padding:12px;max-height:300px;overflow:auto}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--linea);border-top-color:var(--brasa);border-radius:50%;animation:fa-s .8s linear infinite;vertical-align:-2px}@keyframes fa-s{to{transform:rotate(360deg)}}
+.fa-foot{max-width:1180px;margin:10px auto 0;padding:0 16px 110px}.fa-foot hr{border:0;border-top:1px solid var(--linea);margin:0 0 16px}.fa-foot p{margin:0;font-size:12.8px;color:#6E8299;max-width:76ch;line-height:1.55}
+.glos div{display:block;margin-bottom:12px}.glos b{display:block}
+table{border-collapse:collapse;width:100%;font-size:13.8px}th{background:var(--papel);color:var(--acero);font:700 11px var(--mono);letter-spacing:.07em;text-transform:uppercase;text-align:left}td,th{padding:10px 12px;border-bottom:1px solid var(--linea-2);vertical-align:top}.table-wrap{overflow-x:auto}
+/* barra superior con muchos pasos: solo el actual lleva nombre (evita desbordes) */
+.tb-in{gap:10px}.stepper{min-width:0;flex:1 1 auto;justify-content:center;gap:2px}.sdot:not([data-state="now"]) .lbl{display:inline}.sdot{padding-left:4px;padding-right:4px}.sline{min-width:8px;flex:0 1 22px}.logo,.tb-tools{flex:none}
+@media(max-width:900px){.tb-btn .lbl{display:none}}@media(max-width:720px){.hero{padding:28px 20px 24px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ── ValorIA ── */
+.dz-ban{display:flex;gap:12px;align-items:center;border-left:6px solid #B3203A;margin:22px 0}.dz-ban .i{width:28px;height:28px;flex:0 0 28px;color:#B3203A}.dz-ban p{margin:0;font-weight:600}
+.dz-f3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}.dz-f2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.dz-fs{border:1px solid #dfe4ec;border-radius:12px;padding:8px 14px;margin:10px 0}.dz-fs legend{font-weight:700;padding:0 6px}
+.dz-res{margin-top:12px;padding:10px 14px;border-radius:10px;background:#f6f7fb;border:1px solid #dfe4ec;font-variant-numeric:tabular-nums}.dz-res.ok{background:#e7f5f2;border-color:#9fd3c8}.dz-res.aviso{background:#fff4e0;border-color:#e8c27a}.dz-res.error{background:#fde3e6;border-color:#e8a0aa}
+.dz-err{border-left:4px solid #B3203A}.dz-carta{white-space:pre-wrap}.dz-doc h3{margin:18px 0 6px}.dz-li{margin:3px 0;padding-left:14px;position:relative}.dz-li::before{content:"·";position:absolute;left:3px;font-weight:700}
+@media (max-width:620px){.dz-f3,.dz-f2{grid-template-columns:1fr}}
+@media print{body *{visibility:hidden}.screen.on .dz-doc,.screen.on .dz-doc *{visibility:visible}.screen.on .dz-doc{position:absolute;left:0;top:0;width:100%;box-shadow:none;border:0}}
+.sdot{position:relative}.sdot .lbl{display:inline}.sdot:not([data-state="now"]) .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:root{--gris:#4A6075;--brasa:#C4441E;--brasa-osc:#A93918}.sh-step{color:#4A6075}.fa-foot p{color:#4A6075}
+input[type=checkbox],input[type=radio]{min-width:22px;min-height:22px}.fa-chk{min-height:24px}
+.v-exp{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:16px;align-items:start}.v-mapa{position:sticky;top:120px}
+.v-cara{width:100%;max-width:360px;display:block;margin:0 auto}.v-z{stroke-width:1.4;cursor:pointer}.v-s-1{fill:transparent;stroke:#7b8797;stroke-dasharray:4 3}.v-s0{fill:rgba(14,140,122,.18);stroke:#0E8C7A}.v-s1{fill:rgba(240,196,90,.45);stroke:#a87800}.v-s2{fill:rgba(236,150,70,.55);stroke:#b35a00}.v-s3{fill:rgba(214,90,60,.6);stroke:#9b2f17}.v-s4{fill:rgba(160,20,50,.65);stroke:#6d0d22}
+.v-ley{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:#4A6075;margin:8px 0 0}.v-ley span{display:flex;align-items:center;gap:5px}.v-sw{width:14px;height:14px;border-radius:50%;border:1.4px solid;display:inline-block}.v-sw.v-s-1{border-style:dashed}
+.v-zona{border:0;border-top:1px solid #e9edf3;margin:0;padding:12px 0}.v-zona legend{font-weight:700;padding:0;float:left;width:100%;margin-bottom:6px}.v-zona legend+*{clear:both}.v-sc{display:grid;grid-template-columns:1fr 1fr;gap:10px}.v-sc .field{margin:0}.v-capas{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.v-fase{border-top:6px solid #8A9AAB}.v-f1{border-top-color:#6B4FD8}.v-f2{border-top-color:#0E8C7A}.v-f3{border-top-color:#C98200}
+.v-its{list-style:none;margin:0;padding:0;display:grid;gap:10px}.v-it{border:1px solid #dfe4ec;border-radius:12px;padding:10px 14px}.v-off{opacity:.6}.v-ith{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}.v-ith .fa-chk{margin:0}
+.v-itc{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:6px}.v-itc .field{margin:0}.v-rz{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;font-size:14px;color:#7a1f12;background:#FDF1EC;border-radius:8px;padding:8px 10px}.v-rz .i{flex:none;width:18px;height:18px;margin-top:1px}
+.v-prec{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.v-tot{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-top:12px;font-size:15px}.v-tt{font-size:19px}.v-fal{color:#8a5a00;font-weight:600}
+.v-ficha{margin-top:10px}.dz-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dz-tabs .btn{background:#fff;color:#0F2237;border:1px solid #c9d2de}.dz-tabs .btn[aria-pressed=true]{background:#0F2237;color:#fff;border-color:#0F2237}
+@media (max-width:820px){.v-exp{grid-template-columns:1fr}.v-mapa{position:static}.v-cara{max-width:280px}}@media (max-width:480px){.v-itc,.v-sc{grid-template-columns:1fr}}
+</style></head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4M5 17v4M3 19h4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></symbol>
+<symbol id="i-alerta" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5h.01"/></g></symbol>
+</svg>
+<div class="topbar">
+  <div class="tb-in">
+    <button class="logo" id="goHome" type="button" aria-label="Inicio" data-i18n-attr="aria-label:Inicio"><span class="anv"><svg class="i"><use href="#i-target"/></svg></span><span>Valor<em>IA</em></span></button>
+    <nav class="stepper" id="stepper" aria-label="Pasos" data-i18n-attr="aria-label:Pasos"></nav>
+    <div class="tb-tools"><div class="tb-lang" id="langBox"><select id="selLang" class="tb-sel" aria-label="Idioma" data-i18n-attr="aria-label:Idioma"></select></div><button class="tb-btn" id="btnHelp" type="button"><svg class="i"><use href="#i-help"/></svg><span class="lbl" data-i18n="Ayuda">Ayuda</span></button></div>
+  </div>
+  <div class="progress"><span id="progBar"></span></div>
+</div>
+
+<main id="app">
+<section class="screen" data-step="0">
+  <div class="hero">
+    <p class="eyebrow" data-i18n="hero.eyebrow">Kit EstéticIA · Máster de Medicina Estética Integral y Antienvejecimiento · Universidad Miguel Hernández de Elche</p>
+    <h1 data-i18n="hero.h1">Del diagnóstico <em>al plan</em></h1>
+    <p class="lede" data-i18n="hero.lede">Explora la cara por tercios y por capas, en reposo y con el gesto. ValorIA lo convierte en un plan por fases, del soporte a la piel, con las zonas de riesgo de cada técnica y un presupuesto que la paciente entiende. Sin IA y sin conexión.</p>
+    <div class="actions"><button class="btn btn-primary btn-big" id="btnStart" type="button"><svg class="i"><use href="#i-play"/></svg><span data-i18n="s.empezar">Empezar una valoración</span></button><button class="btn btn-ghost btn-big" id="btnEjemplo" type="button"><svg class="i"><use href="#i-eye"/></svg><span data-i18n="s.ejemplo">Ver un ejemplo</span></button></div>
+    <p class="fa-inicio" id="inicioProj"></p>
+    <div class="fa-autores"><span class="fa-autores-cap" data-i18n="Realizada entre">Realizada entre</span>
+      <div class="fa-autor"><span class="fa-av" style="--c:#E4572E">FB</span><div><b>Fernando Borrás Rocher</b><small>Universidad Miguel Hernández de Elche</small><a class="fa-orcid" href="https://orcid.org/0000-0002-5519-4573" target="_blank" rel="noopener">ORCID 0000-0002-5519-4573</a></div></div><span class="fa-x">×</span>
+      <div class="fa-autor"><span class="fa-av" style="--c:#0E8C7A">EC</span><div><b>Elena Caride Miana</b><small>Dra. Caride Medicina Estética &amp; Antiaging</small><a class="fa-orcid" href="https://orcid.org/0000-0002-7620-4857" target="_blank" rel="noopener">ORCID 0000-0002-7620-4857</a></div></div>
+      <p class="fa-idea">Segunda app del Kit EstéticIA, diseñado para el alumnado del Máster de Formación Permanente en Medicina Estética Integral y Antienvejecimiento (UMH).</p></div>
+  </div>
+  <div class="card dz-ban"><svg class="i"><use href="#i-alerta"/></svg><p data-i18n="s.ban">Un surco marcado casi nunca se arregla rellenando el surco. Si el pómulo o la mandíbula han perdido soporte, se trata primero la causa y se reevalúa después.</p></div>
+  <h2 class="sec-title" data-i18n="Cómo funciona">Cómo funciona</h2>
+  <div class="journey" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <div class="jstop" style="--c:#6B4FD8"><span class="jn">1</span><div class="ji"><svg class="i"><use href="#i-user"/></svg></div><b data-i18n="s.j1b">Paciente y piel</b><span data-i18n="s.j1s">Motivo de consulta, Fitzpatrick, Glogau y calidad de la piel. Puede leer la ficha de AnamnesIA.</span></div>
+    <div class="jstop" style="--c:#0E8C7A"><span class="jn">2</span><div class="ji"><svg class="i"><use href="#i-target"/></svg></div><b data-i18n="s.j2b">Exploración</b><span data-i18n="s.j2s">Cada zona en reposo y con el gesto, de 0 a 4, y la capa que lo causa.</span></div>
+    <div class="jstop" style="--c:#C98200"><span class="jn">3</span><div class="ji"><svg class="i"><use href="#i-sliders"/></svg></div><b data-i18n="s.j3b">Plan por fases</b><span data-i18n="s.j3s">Soporte, gesto y contorno, piel. Con zonas de riesgo y presupuesto.</span></div>
+    <div class="jstop" style="--c:#B3203A"><span class="jn">4</span><div class="ji"><svg class="i"><use href="#i-doc"/></svg></div><b data-i18n="s.j4b">Documentos</b><span data-i18n="s.j4s">El plan para la paciente, en su idioma, y el informe para la historia.</span></div>
+  </div>
+  <h2 class="sec-title" data-i18n="Dónde va cada cosa">Dónde va cada cosa</h2>
+  <div class="zonas"><div class="zona l"><h4 data-i18n="Siempre en tu ordenador">Siempre en tu ordenador</h4><ul data-i18n="s.zl">
+<li>La exploración, el plan y los precios, guardados en este navegador</li><li>El plan sale de reglas escritas, sin IA y sin enviar nada</li><li>La app propone; la indicación y el plan definitivo son tuyos</li></ul></div></div>
+</section>
+<section class="screen" data-step="1">
+  <header class="sh" style="--c:#6B4FD8"><div class="sh-ico"><svg class="i"><use href="#i-user"/></svg></div><div><p class="sh-step" data-i18n="Paso 1 de 4">Paso 1 de 4</p><h2 data-i18n="Paciente y piel">Paciente y piel</h2><p class="sh-lede" data-i18n="s.pac.lede">Lo que le preocupa a la paciente y cómo es su piel. Si tienes su ficha de AnamnesIA, cárgala.</p></div></header>
+  <div id="pacBox"></div>
+</section>
+<section class="screen" data-step="2">
+  <header class="sh" style="--c:#0E8C7A"><div class="sh-ico"><svg class="i"><use href="#i-target"/></svg></div><div><p class="sh-step" data-i18n="Paso 2 de 4">Paso 2 de 4</p><h2 data-i18n="Exploración">Exploración</h2><p class="sh-lede" data-i18n="s.exp.lede">Puntúa cada zona en reposo y con el gesto (0 a 4) y marca qué capa lo causa. Solo cuentan para el plan las zonas de 2 o más.</p></div></header>
+  <div id="expBox"></div>
+</section>
+<section class="screen" data-step="3">
+  <header class="sh" style="--c:#C98200"><div class="sh-ico"><svg class="i"><use href="#i-sliders"/></svg></div><div><p class="sh-step" data-i18n="Paso 3 de 4">Paso 3 de 4</p><h2 data-i18n="Plan por fases">Plan por fases</h2><p class="sh-lede" data-i18n="s.plan.lede">Revisa cada propuesta: técnica, cantidad y si la incluyes. Pon tus precios para el presupuesto.</p></div></header>
+  <div id="planBox"></div>
+</section>
+<section class="screen" data-step="4">
+  <header class="sh" style="--c:#B3203A"><div class="sh-ico"><svg class="i"><use href="#i-doc"/></svg></div><div><p class="sh-step" data-i18n="Paso 4 de 4">Paso 4 de 4</p><h2 data-i18n="Documentos">Documentos</h2><p class="sh-lede" data-i18n="s.doc.lede">El plan explicado para la paciente y el informe de valoración para la historia clínica.</p></div></header>
+  <div id="docBox"></div>
+</section>
+</main>
+
+<footer class="fa-foot"><hr><p><b>ValorIA</b> · Fernando Borrás Rocher · Elena Caride Miana · Universidad Miguel Hernández de Elche; Dra. Caride Medicina Estética & Antiaging. <span data-i18n="f.pie">Herramienta de apoyo para médicos: ordena la exploración y propone un plan que tú decides. No sustituye tu juicio clínico ni las fichas técnicas. Tus datos se guardan solo en este navegador.</span></p></footer>
+<div class="bottomnav"><div class="bn-in"><button class="btn btn-ghost" id="navBack" type="button"><svg class="i"><use href="#i-left"/></svg><span data-i18n="Atrás">Atrás</span></button><div class="bn-hint" id="navHint"></div><button class="btn btn-primary" id="navNext" type="button"><span id="navNextTxt">Siguiente</span><svg class="i"><use href="#i-right"/></svg></button></div></div>
+
+
+<div class="modal" id="mHelp" role="dialog" aria-modal="true" aria-labelledby="mHelpT"><div class="modal-box"><div class="modal-head"><h2 id="mHelpT" data-i18n="Ayuda">Ayuda</h2><button type="button" data-close data-i18n="Cerrar">Cerrar</button></div><div class="modal-body"><div class="glos" id="glos"></div></div></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>const APP="valoria";const APP_NAME="ValorIA";const LOGO_ICON="target";const LANGS_ON=["es", "en", "pt"];
+"use strict";
+/* ── utilidades comunes (todas las apps Forja) ──────────────────────────────
+   Requiere que la app defina antes:  const APP = 'miapp';  (prefijo de almacenamiento)  */
+const $ = id => document.getElementById(id), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ico = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = (p = '') => p + Math.random().toString(36).slice(2, 8);
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const wc = s => (String(s || '').trim().match(/[\p{L}\p{N}]+/gu) || []).length;
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+const nf = n => Math.round(n).toLocaleString(typeof locale === 'function' ? locale() : 'es-ES');
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+const slug = s => norm(s).replace(/ /g, '_').slice(0, 40) || 'x';
+function toast(m, ms = 4200) { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms); }
+function dl(nombre, contenido, tipo) { const b = contenido instanceof Blob ? contenido : new Blob([contenido], {type: tipo}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2500); }
+
+/* librerías externas (solo para LEER ficheros: Word, PDF, PowerPoint). Escribir Word/ZIP no necesita ninguna (70-report).
+   Cada librería tiene un espejo: si cdnjs falla (URL retirada, bloqueador, proxy), se prueba jsDelivr con la misma versión.
+   La CSP de build.py admite los dos orígenes. Las URLs están comprobadas contra el paquete npm de esa versión. */
+const LIB = {
+  mammoth: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfw: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  docx: 'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js'   // obsoleto: usa wordDeMarkdown / wordDeXml (sin red)
+};
+const LIB_ESPEJO = {
+  [LIB.mammoth]: 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js',
+  [LIB.jszip]: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+  [LIB.pdf]: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+  [LIB.pdfw]: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+};
+const LIB_GLOBAL = {[LIB.mammoth]: 'mammoth', [LIB.jszip]: 'JSZip', [LIB.pdf]: 'pdfjsLib', [LIB.docx]: 'docx'};
+const _libNombre = u => (u.match(/\/(?:libs|npm)\/([^/@]+)/) || [, 'externa'])[1];
+const _cargaScript = u => new Promise((ok, ko) => { const s = document.createElement('script'); s.src = u; const tm = setTimeout(() => { s.remove(); ko(); }, 20000); s.onload = () => { clearTimeout(tm); ok(); }; s.onerror = () => { clearTimeout(tm); s.remove(); ko(); }; document.head.appendChild(s); });
+const _libCargadas = {};
+/* cargaLib([LIB.x, …]) carga en orden; cada una prueba cdnjs y luego su espejo; no recarga lo ya cargado */
+async function cargaLib(urls) {
+  for (const u of urls) {
+    const g = LIB_GLOBAL[u]; if ((g && window[g]) || _libCargadas[u]) continue;
+    let hecho = false, v_ok = u;
+    for (const v of [u, LIB_ESPEJO[u]].filter(Boolean)) { try { await _cargaScript(v); hecho = true; v_ok = v; break; } catch {} }
+    if (!hecho) throw new Error(navigator.onLine === false ? t('Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.') : t('No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.', _libNombre(u)));
+    _libCargadas[u] = v_ok;
+  }
+}
+
+/* huella SHA-256 (con alternativa para file:// sin contexto seguro) y canonización estable */
+const canon = v => v === null || typeof v !== 'object' ? JSON.stringify(v) : Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+function sha256js(bytes) {
+  const pr = []; for (let n = 2; pr.length < 64; n++) if (pr.every(p => n % p)) pr.push(n);
+  const fr = x => Math.floor((x - Math.floor(x)) * 4294967296), K = pr.map(p => fr(Math.cbrt(p))), H = pr.slice(0, 8).map(p => fr(Math.sqrt(p)));
+  const l = bytes.length, pad = new Uint8Array(((l + 9 + 63) >> 6) << 6); pad.set(bytes); pad[l] = 0x80;
+  const dv = new DataView(pad.buffer); dv.setUint32(pad.length - 8, Math.floor(l * 8 / 4294967296)); dv.setUint32(pad.length - 4, (l * 8) >>> 0);
+  const rr = (x, n) => (x >>> n) | (x << (32 - n)), W = new Uint32Array(64);
+  for (let i = 0; i < pad.length; i += 64) {
+    for (let t = 0; t < 16; t++) W[t] = dv.getUint32(i + t * 4);
+    for (let t = 16; t < 64; t++) { const s0 = rr(W[t - 15], 7) ^ rr(W[t - 15], 18) ^ (W[t - 15] >>> 3), s1 = rr(W[t - 2], 17) ^ rr(W[t - 2], 19) ^ (W[t - 2] >>> 10); W[t] = (W[t - 16] + s0 + W[t - 7] + s1) >>> 0; }
+    let [a, b, c, d, e, f, g, hh] = H;
+    for (let t = 0; t < 64; t++) { const S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25), ch = (e & f) ^ (~e & g), t1 = (hh + S1 + ch + K[t] + W[t]) >>> 0, S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22), mj = (a & b) ^ (a & c) ^ (b & c), t2 = (S0 + mj) >>> 0; hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0; }
+    [a, b, c, d, e, f, g, hh].forEach((v, j) => H[j] = (H[j] + v) >>> 0);
+  }
+  return H.map(v => v.toString(16).padStart(8, '0')).join('');
+}
+async function sha256(str) {
+  const b = new TextEncoder().encode(str);
+  if (window.crypto?.subtle) { try { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', b))].map(x => x.toString(16).padStart(2, '0')).join(''); } catch {} }
+  return sha256js(b);
+}
+
+/* ── persistencia local (IndexedDB). La app define:  let S = {...};  y opcionalmente  const KEYP = () => 'main';  ── */
+const dbP = new Promise((ok, ko) => { const r = indexedDB.open(APP, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+const kv = async (mode, fn) => { const d = await dbP; return new Promise((ok, ko) => { const tx = d.transaction('kv', mode), q = fn(tx.objectStore('kv')); tx.oncomplete = () => ok(q && q.result); tx.onerror = () => ko(tx.error); }); };
+const _key = () => (typeof KEYP === 'function' ? KEYP() : 'main');
+let _g;
+function guarda() { clearTimeout(_g); _g = setTimeout(() => kv('readwrite', s => s.put(S, _key())).catch(() => toast(t('No se pudo guardar en el navegador (¿demasiado material?)'))), 500); }
+/* guardado inmediato: úsalo justo después de pagar una llamada a la IA, para no perder el resultado si se cierra la pestaña */
+const guardaYa = () => { clearTimeout(_g); return kv('readwrite', s => s.put(S, _key())).catch(() => toast(t('No se pudo guardar en el navegador'))); };
+window.addEventListener('pagehide', () => { clearTimeout(_g); try { kv('readwrite', s => s.put(S, _key())); } catch {} });
+async function cargaEstado(key = _key()) { try { const p = await kv('readonly', s => s.get(key)); return p || null; } catch { return null; } }
+
+/* ── navegación Forja: barra superior, stepper, barra inferior, ventanas, ayuda y ajustes de IA ─────────────
+   La app define (en app.js; se leen al ejecutar, no al cargar el módulo) y llama a iniciaUI() al arrancar:
+     const STEPS  = ['Inicio', 'Paso 1', ...];                   // etiquetas del stepper (la actual se muestra con nombre)
+     const NAV    = [['Empezar',''], ['Siguiente: …','pista'], …]; // [texto del botón «siguiente», pista de la barra inferior] por pantalla
+     const RENDER = {0: pintaInicio, 1: pintaX, …};               // funciones que pintan cada pantalla al entrar
+     const GLOS   = [['Título','Texto'], …];                       // ayuda
+   Idiomas: STEPS, NAV, GLOS y HUBS se escriben en español y se traducen con t() (módulo 65-i18n; diccionario I18N en src/i18n.js).
+   Opcionales:  const CAN_NEXT = i => true|'mensaje';  // validación antes de avanzar
+                const HUBS = ['Glosario', 'Progreso'];  // secciones fuera del recorrido lineal: pantallas con data-step = STEPS.length + k.
+                // Al entrar en una sección el stepper muestra solo su nombre, la barra de progreso se vacía y «Atrás»/«Siguiente» vuelven al inicio. */
+let step = 0;
+const esHub = i => i >= STEPS.length;
+function buildStepper() {
+  if (esHub(step)) {
+    const nombre = (typeof HUBS !== 'undefined' && HUBS[step - STEPS.length]) || '';
+    $('stepper').innerHTML = `<button class="sdot" type="button" data-go="0" data-state="done"><span class="n">${ico('left')}</span><span class="lbl">${esc(t('Inicio'))}</span></button><span class="sline on"></span><button class="sdot" type="button" data-state="now" aria-current="page"><span class="n">${ico(typeof LOGO_ICON === 'string' ? LOGO_ICON : 'bulb')}</span><span class="lbl">${esc(t(nombre))}</span></button>`;
+    $$('#stepper [data-go]').forEach(b => b.onclick = () => go(+b.dataset.go)); return;
+  }
+  $('stepper').innerHTML = STEPS.map((s, i) => `${i ? `<span class="sline${i <= step ? ' on' : ''}"></span>` : ''}<button class="sdot" type="button" data-go="${i}" data-state="${i < step ? 'done' : i === step ? 'now' : ''}" ${i === step ? 'aria-current="step"' : ''}><span class="n">${i < step ? ico('check') : i === 0 ? ico(typeof LOGO_ICON === 'string' ? LOGO_ICON : 'bulb') : i}</span><span class="lbl">${esc(t(s))}</span></button>`).join('');
+  $$('#stepper [data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
+}
+function updateNav() { const N = NAV[step] || ['Volver al inicio', '']; $('navBack').classList.toggle('hidden', step === 0 || esHub(step)); $('navNextTxt').textContent = t(N[0]); $('navHint').textContent = N[1] ? t(N[1]) : ''; }
+function go(i) {
+  step = i; $$('.screen').forEach(s => s.classList.toggle('on', +s.dataset.step === i)); $('progBar').style.width = esHub(i) ? '0%' : (i / (STEPS.length - 1) * 100) + '%';
+  (RENDER[i] || (() => {}))(); buildStepper(); updateNav(); window.scrollTo({top: 0, behavior: 'instant'});
+}
+$('goHome').onclick = () => go(0);
+$('navBack').onclick = () => { if (step > 0) go(step - 1); };
+$('navNext').onclick = () => { if (esHub(step)) return go(0); const ok = typeof CAN_NEXT === 'function' ? CAN_NEXT(step) : true; if (ok !== true && ok) return toast(ok); go(step === STEPS.length - 1 ? 0 : step + 1); };
+
+/* ventanas modales (Escape y clic fuera cierran; data-close en el botón) */
+const _cierres = {};   // id de modal → función a ejecutar al cerrar
+$$('.modal').forEach(m => m.addEventListener('click', ev => { if (ev.target === m || ev.target.hasAttribute('data-close')) { m.classList.remove('on'); _cierres[m.id]?.(); } }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('.modal.on').forEach(m => { m.classList.remove('on'); _cierres[m.id]?.(); }); });
+/* Ajustes de IA. El modelo se elige en un <select> (no en <input list>: un <datalist> con el campo ya relleno solo muestra
+   las opciones que coinciden con lo escrito, y la lista «no se carga» a ojos de la persona). «Otro modelo…» abre un campo libre. */
+const OTRO_MODELO = '__otro';
+function pintaModelos(pv = getProv()) {
+  const sel = $('selModelo'); if (!sel) return;
+  let ml = []; try { ml = JSON.parse(localStorage.getItem(APP + '_models_' + pv) || '[]'); } catch {}
+  const act = getMod(pv), lista = [...new Set([act, ...ml, PROV[pv].m])].filter(Boolean);
+  sel.innerHTML = lista.map(m => `<option value="${esc(m)}">${esc(m)}${m === act ? ' · ' + esc(t('actual')) : ''}${ml.length && !ml.includes(m) ? ' · ' + esc(t('no aparece en tu clave')) : ''}</option>`).join('')
+    + `<option value="${OTRO_MODELO}">${esc(t('Otro modelo (escribirlo)…'))}</option>`;
+  sel.value = act; $('modelo').value = act; $('modelo').hidden = true;
+}
+function cargaIA() { const pv = getProv(); $('selProv').value = pv; $('apiKey').value = getKey(pv); $('apiKey').placeholder = KPH[pv]; pintaModelos(pv); }
+/* pide a la API del proveedor los modelos de ESA clave y los pone en el desplegable (silencio: sin mensaje si falta la clave) */
+async function cargaModelos(silencio = false) {
+  const st = $('iaEstado'), pv = getProv();
+  if (!getKey(pv)) { if (!silencio) st.textContent = t('Primero pega tu clave.'); return []; }
+  st.textContent = t('Cargando los modelos de tu clave…');
+  try {
+    const l = await listaModelos(pv); if (pv !== getProv()) return l;
+    localStorage.setItem(APP + '_models_' + pv, JSON.stringify(l)); pintaModelos(pv);
+    st.textContent = l.length ? t('{0} modelos disponibles en tu clave: elígelo en el desplegable.', l.length) : t('Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».');
+    return l;
+  } catch (e) { st.textContent = e.message; return []; }
+}
+const KPH = {openai: 'sk-proj-…', gemini: 'AIza…', anthropic: 'sk-ant-…'};
+/* iniciaUI(): llámala UNA vez desde app.js, al final, justo antes de go(0). Enlaza la ayuda y los ajustes de IA.
+   (No se hace al cargar el módulo porque GLOS y el resto de constantes de la app aún no existen en ese momento.) */
+function iniciaUI() {
+  if (typeof initI18n === 'function') initI18n();
+  window.addEventListener('langchange', () => { if ($('btnHelp')) $('glos').innerHTML = (typeof GLOS !== 'undefined' ? GLOS : []).map(g => `<div><b>${esc(t(g[0]))}</b><span>${esc(t(g[1]))}</span></div>`).join(''); (RENDER[step] || (() => {}))(); buildStepper(); updateNav(); if ($('mIA') && $('mIA').classList.contains('on')) cargaIA(); });
+  if ($('btnHelp')) { $('glos').innerHTML = (typeof GLOS !== 'undefined' ? GLOS : []).map(g => `<div><b>${esc(t(g[0]))}</b><span>${esc(t(g[1]))}</span></div>`).join(''); $('btnHelp').onclick = () => $('mHelp').classList.add('on'); }
+  if ($('btnIA')) {
+    const sinLista = () => { try { return !JSON.parse(localStorage.getItem(APP + '_models_' + getProv()) || '[]').length; } catch { return true; } };
+    $('selProv').onchange = () => { localStorage.setItem(APP + '_prov', $('selProv').value); cargaIA(); if (getKey() && sinLista()) cargaModelos(true); };
+    let _kt; $('apiKey').oninput = () => { const pv = getProv(); localStorage.setItem(PROV[pv].k, $('apiKey').value.trim()); localStorage.removeItem(APP + '_models_' + pv); clearTimeout(_kt); _kt = setTimeout(() => { if ($('apiKey').value.trim().length >= 20) cargaModelos(true); }, 900); };
+    $('selModelo').onchange = () => { const v = $('selModelo').value; if (v === OTRO_MODELO) { $('modelo').hidden = false; $('modelo').value = ''; $('modelo').focus(); return; } $('modelo').hidden = true; localStorage.setItem(APP + '_model_' + getProv(), v); };
+    $('modelo').oninput = () => localStorage.setItem(APP + '_model_' + getProv(), $('modelo').value.trim() || PROV[getProv()].m);
+    $('modelo').onchange = () => pintaModelos();
+    $('btnEye').onclick = () => { const k = $('apiKey'); k.type = k.type === 'password' ? 'text' : 'password'; };
+    $('btnModelos').onclick = () => cargaModelos(false);
+    $('btnIA').onclick = () => { cargaIA(); $('mIA').classList.add('on'); if (getKey() && sinLista()) cargaModelos(true); };
+  }
+}
+/* ¿hay clave? si no, abre los ajustes de IA y avisa */
+function pideClave() { if (getKey()) return true; if ($('mIA')) { cargaIA(); $('mIA').classList.add('on'); } toast(t('Pega tu clave de IA para continuar')); return false; }
+
+/* ── idiomas: español (por defecto), inglés y portugués; opcionales: català, euskara y galego (app.json → langs) ─────────────────────────────────────────────────
+   El español es el idioma de origen: está escrito en el HTML y en el JS. Las demás lenguas se traducen con diccionarios.
+   Dos formas de marcar texto traducible (una sola función, t(), y un diccionario por idioma):
+     · HTML estático:   <span data-i18n="clave">Texto en español</span>
+                        <input data-i18n-attr="placeholder:clave;aria-label:otra" placeholder="…">
+       En español se conserva el texto del HTML; en los demás idiomas se sustituye por I18N[lang][clave] (HTML de confianza: nunca metas
+       datos de la persona en el diccionario). Envuelve en <span> solo el texto, no los iconos ni los botones enteros.
+     · JavaScript:      t('Texto en español con {0} huecos', valor)   → la propia frase en español es la clave (estilo gettext)
+                        t('msg.clave')                                → clave corta; su texto en español va en I18N.es['msg.clave']
+   La app define (en src/i18n.js, se lee al ejecutar):   const I18N = {en: {…}, pt: {…}, es: {…solo claves cortas…}};
+   Este módulo trae I18N_BASE con todo lo que ponen los módulos de Forja (errores de IA, ajustes, avisos); la app puede sobrescribirlo.
+   build.py inyecta  const LANGS_ON = ["es","en","pt"]  desde app.json → langs  (con un solo idioma el selector no se muestra).
+   Reglas que evitan fallos reales:
+     · Guarda DATOS en el estado, no frases ya traducidas; traduce al pintar (si no, al cambiar de idioma quedan frases viejas).
+     · Cada pantalla se repinta al cambiar de idioma (evento «langchange» → RENDER[step]).
+     · A la IA se le pide el idioma con INSTR_IDIOMA(); las citas literales del material se copian en su idioma original. */
+const LANGS = {es: 'Español', ca: 'Català', eu: 'Euskara', gl: 'Galego', en: 'English', pt: 'Português'};   // ca, eu y gl: opcionales (lenguas cooficiales de España)
+const IA_LANG = {es: 'español', ca: 'català', eu: 'euskara (vasco)', gl: 'galego (gallego)', en: 'English', pt: 'português'};   // cómo se le nombra el idioma a la IA
+const LOCALE = {es: 'es-ES', ca: 'ca-ES', eu: 'eu-ES', gl: 'gl-ES', en: 'en-GB', pt: 'pt-PT'};            // formatos de número y fecha
+const langsOn = () => (typeof LANGS_ON !== 'undefined' ? LANGS_ON : ['es', 'en', 'pt']).filter(l => LANGS[l]);
+let LANG = 'es', _D = null;
+const locale = () => LOCALE[LANG] || 'es-ES';
+const langIA = () => IA_LANG[LANG] || 'español';
+/* frase para añadir a CADA prompt cuya respuesta ve la persona: la IA escribe en su idioma, pero ids, claves JSON y citas literales no se tocan */
+const INSTR_IDIOMA = () => `Escribe todos los textos de tu respuesta (los valores de los campos JSON) en ${langIA()}. No traduzcas los nombres de las claves JSON, los identificadores ni las citas literales del material: cópialas en su idioma original, sin cambiar nada.`;
+
+const I18N_BASE = {
+  en: {
+    'Inicio': 'Home', 'Ayuda': 'Help', 'IA': 'AI', 'Pasos': 'Steps', 'Atrás': 'Back', 'Siguiente': 'Next', 'Cerrar': 'Close', 'Cancelar': 'Cancel', 'Idioma': 'Language',
+    'Volver al inicio': 'Back to the start', 'Inteligencia artificial': 'Artificial intelligence', 'Proveedor': 'Provider', 'Tu clave de API': 'Your API key', 'Ver': 'Show', 'Modelo': 'Model',
+    'Ver los modelos de mi clave': 'Show the models available for my key',
+    'f.ia.ayuda': 'The key is stored only in this browser and sent only to your provider. Each person uses their own key and pays for their own use. Choose an inexpensive model: this use does not need the most powerful one.',
+    'Esto es lo que saldría hacia tu proveedor de IA': 'This is what would be sent to your AI provider',
+    'f.envio.chk': 'I have reviewed the sample and confirm that it may leave my computer.',
+    'Muestra del envío:': 'Sample of what is sent:', 'Realizada entre': 'Created by', 'Realizada por': 'Created by',
+    'Cómo funciona': 'How it works', 'Dónde va cada cosa': 'Where everything goes',
+    'Siempre en tu ordenador': 'Always on your computer', 'Sale hacia tu proveedor de IA': 'Sent to your AI provider',
+    'No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.': "Could not load the {0} library. A content blocker or your institution's network may be preventing it; try another network or disable the blocker on this page.",
+    'Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.': "Offline: an internet connection is needed to open this type of file the first time.",
+    'No se pudo guardar en el navegador (¿demasiado material?)': 'Could not save in the browser (too much material?)', 'No se pudo guardar en el navegador': 'Could not save in the browser',
+    '{0} no reconoce tu clave. Revísala en el botón «IA».': '{0} does not recognise your key. Check it with the “AI” button.',
+    'Tu clave no tiene acceso al modelo «{0}». Elige otro en el botón «IA».': 'Your key has no access to the model “{0}”. Choose another one with the “AI” button.',
+    'Tu cuenta de {0} no tiene saldo o ha alcanzado su límite.': 'Your {0} account has no balance or has reached its limit.',
+    'El modelo «{0}» no admite imágenes. Elige uno con visión.': 'The model “{0}” does not accept images. Choose one with vision.',
+    'No hay conexión con {0}.': 'No connection to {0}.', '{0} no responde ahora mismo. Inténtalo de nuevo en un momento.': '{0} is not responding right now. Please try again in a moment.',
+    'Falta tu clave de IA. Pulsa el botón «IA», arriba.': 'Your AI key is missing. Press the “AI” button at the top.', 'OpenAI no responde ahora mismo.': 'OpenAI is not responding right now.',
+    'El proveedor ha bloqueado la respuesta ({0}).': 'The provider blocked the response ({0}).',
+    'La IA no devolvió una respuesta con el formato esperado. Inténtalo de nuevo.': 'The AI did not return a response in the expected format. Please try again.',
+    'Primero pega tu clave.': 'Paste your key first.', '{0} modelos disponibles en tu clave; escribe o elige uno.': '{0} models available for your key; type or choose one.',
+    'Pega tu clave de IA para continuar': 'Paste your AI key to continue',
+    'El PowerPoint no tiene diapositivas': 'The PowerPoint has no slides', 'Formato no admitido (usa Word, PDF, PowerPoint, texto, imágenes, audio o vídeo)': 'Unsupported format (use Word, PDF, PowerPoint, text, images, audio or video)',
+    '«{0}» pesa más de 600 MB: exporta solo el audio (MP3 o WAV) y súbelo en su lugar.': '“{0}” is larger than 600 MB: export only the audio (MP3 or WAV) and upload that instead.',
+    'No se pudo leer el audio de «{0}». Prueba a exportarlo como MP3 o WAV.': 'Could not read the audio of “{0}”. Try exporting it as MP3 or WAV.',
+    'Para transcribir necesitas una clave de OpenAI o de Gemini (Claude no transcribe audio). Añádela en el botón «IA».': 'To transcribe you need an OpenAI or Gemini key (Claude does not transcribe audio). Add it with the “AI” button.',
+    'actual': "current",
+    'no aparece en tu clave': "not available for your key",
+    'Otro modelo (escribirlo)…': "Another model (type it)…",
+    'Escribe el nombre exacto del modelo': "Type the exact model name",
+    'Cargando los modelos de tu clave…': "Loading the models for your key…",
+    '{0} modelos disponibles en tu clave: elígelo en el desplegable.': "{0} models available for your key: choose one from the drop-down list.",
+    'Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».': "Your key returned no text models. Type the name with “Another model”."
+  },
+  pt: {
+    'Inicio': 'Início', 'Ayuda': 'Ajuda', 'IA': 'IA', 'Pasos': 'Passos', 'Atrás': 'Voltar', 'Siguiente': 'Seguinte', 'Cerrar': 'Fechar', 'Cancelar': 'Cancelar', 'Idioma': 'Idioma',
+    'Volver al inicio': 'Voltar ao início', 'Inteligencia artificial': 'Inteligência artificial', 'Proveedor': 'Fornecedor', 'Tu clave de API': 'A sua chave de API', 'Ver': 'Mostrar', 'Modelo': 'Modelo',
+    'Ver los modelos de mi clave': 'Ver os modelos disponíveis na minha chave',
+    'f.ia.ayuda': 'A chave é guardada apenas neste navegador e enviada apenas ao seu fornecedor. Cada pessoa usa a sua própria chave e paga a sua utilização. Escolha um modelo económico: esta utilização não precisa do mais potente.',
+    'Esto es lo que saldría hacia tu proveedor de IA': 'Isto é o que seria enviado ao seu fornecedor de IA',
+    'f.envio.chk': 'Revi a amostra e confirmo que pode sair do meu computador.',
+    'Muestra del envío:': 'Amostra do que é enviado:', 'Realizada entre': 'Realizada por', 'Realizada por': 'Realizada por',
+    'Cómo funciona': 'Como funciona', 'Dónde va cada cosa': 'Para onde vai cada coisa',
+    'Siempre en tu ordenador': 'Sempre no seu computador', 'Sale hacia tu proveedor de IA': 'Enviado ao seu fornecedor de IA',
+    'No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.': "Não foi possível carregar a biblioteca {0}. Um bloqueador ou a rede da sua instituição pode estar a impedi-la; experimente outra rede ou desative o bloqueador nesta página.",
+    'Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.': "Sem ligação: é preciso internet para abrir este tipo de ficheiro pela primeira vez.",
+    'No se pudo guardar en el navegador (¿demasiado material?)': 'Não foi possível guardar no navegador (demasiado material?)', 'No se pudo guardar en el navegador': 'Não foi possível guardar no navegador',
+    '{0} no reconoce tu clave. Revísala en el botón «IA».': '{0} não reconhece a sua chave. Verifique-a no botão «IA».',
+    'Tu clave no tiene acceso al modelo «{0}». Elige otro en el botón «IA».': 'A sua chave não tem acesso ao modelo «{0}». Escolha outro no botão «IA».',
+    'Tu cuenta de {0} no tiene saldo o ha alcanzado su límite.': 'A sua conta {0} não tem saldo ou atingiu o limite.',
+    'El modelo «{0}» no admite imágenes. Elige uno con visión.': 'O modelo «{0}» não aceita imagens. Escolha um com visão.',
+    'No hay conexión con {0}.': 'Sem ligação a {0}.', '{0} no responde ahora mismo. Inténtalo de nuevo en un momento.': '{0} não está a responder neste momento. Tente novamente daqui a pouco.',
+    'Falta tu clave de IA. Pulsa el botón «IA», arriba.': 'Falta a sua chave de IA. Prima o botão «IA», em cima.', 'OpenAI no responde ahora mismo.': 'A OpenAI não está a responder neste momento.',
+    'El proveedor ha bloqueado la respuesta ({0}).': 'O fornecedor bloqueou a resposta ({0}).',
+    'La IA no devolvió una respuesta con el formato esperado. Inténtalo de nuevo.': 'A IA não devolveu uma resposta no formato esperado. Tente novamente.',
+    'Primero pega tu clave.': 'Cole primeiro a sua chave.', '{0} modelos disponibles en tu clave; escribe o elige uno.': '{0} modelos disponíveis na sua chave; escreva ou escolha um.',
+    'Pega tu clave de IA para continuar': 'Cole a sua chave de IA para continuar',
+    'El PowerPoint no tiene diapositivas': 'O PowerPoint não tem diapositivos', 'Formato no admitido (usa Word, PDF, PowerPoint, texto, imágenes, audio o vídeo)': 'Formato não suportado (use Word, PDF, PowerPoint, texto, imagens, áudio ou vídeo)',
+    '«{0}» pesa más de 600 MB: exporta solo el audio (MP3 o WAV) y súbelo en su lugar.': '«{0}» tem mais de 600 MB: exporte apenas o áudio (MP3 ou WAV) e carregue-o em vez disso.',
+    'No se pudo leer el audio de «{0}». Prueba a exportarlo como MP3 o WAV.': 'Não foi possível ler o áudio de «{0}». Tente exportá-lo como MP3 ou WAV.',
+    'Para transcribir necesitas una clave de OpenAI o de Gemini (Claude no transcribe audio). Añádela en el botón «IA».': 'Para transcrever precisa de uma chave da OpenAI ou do Gemini (o Claude não transcreve áudio). Adicione-a no botão «IA».',
+    'actual': "atual",
+    'no aparece en tu clave': "não aparece na sua chave",
+    'Otro modelo (escribirlo)…': "Outro modelo (escrevê-lo)…",
+    'Escribe el nombre exacto del modelo': "Escreva o nome exato do modelo",
+    'Cargando los modelos de tu clave…': "A carregar os modelos da sua chave…",
+    '{0} modelos disponibles en tu clave: elígelo en el desplegable.': "{0} modelos disponíveis na sua chave: escolha-o na lista pendente.",
+    'Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».': "A sua chave não devolveu nenhum modelo de texto. Escreva o nome com «Outro modelo»."
+  },
+  ca: {
+    'Inicio': "Inici",
+    'Ayuda': "Ajuda",
+    'IA': "IA",
+    'Pasos': "Passos",
+    'Atrás': "Enrere",
+    'Siguiente': "Següent",
+    'Cerrar': "Tancar",
+    'Cancelar': "Cancel·lar",
+    'Idioma': "Idioma",
+    'Volver al inicio': "Tornar a l’inici",
+    'Inteligencia artificial': "Intel·ligència artificial",
+    'Proveedor': "Proveïdor",
+    'Tu clave de API': "La teva clau d’API",
+    'Ver': "Veure",
+    'Modelo': "Model",
+    'Ver los modelos de mi clave': "Veure els models de la meva clau",
+    'f.ia.ayuda': "La clau es desa només en aquest navegador i s’envia únicament al teu proveïdor. Cada persona fa servir la seva i paga el seu ús. Tria un model econòmic: aquest ús no necessita el més potent.",
+    'Esto es lo que saldría hacia tu proveedor de IA': "Això és el que sortiria cap al teu proveïdor d’IA",
+    'f.envio.chk': "He revisat la mostra i confirmo que pot sortir del meu ordinador.",
+    'Muestra del envío:': "Mostra de l’enviament:",
+    'Realizada entre': "Realitzada per",
+    'Realizada por': "Realitzada per",
+    'Cómo funciona': "Com funciona",
+    'Dónde va cada cosa': "On va cada cosa",
+    'Siempre en tu ordenador': "Sempre al teu ordinador",
+    'Sale hacia tu proveedor de IA': "Surt cap al teu proveïdor d’IA",
+    'No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.': "No s’ha pogut carregar la biblioteca {0}. Potser un bloquejador o la xarxa de la teua institució ho impedeix; prova una altra xarxa o desactiva el bloquejador en aquesta pàgina.",
+    'Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.': "Sense connexió: cal internet per a obrir aquest tipus de fitxer la primera vegada.",
+    'No se pudo guardar en el navegador (¿demasiado material?)': "No s’ha pogut desar al navegador (massa material?)",
+    'No se pudo guardar en el navegador': "No s’ha pogut desar al navegador",
+    '{0} no reconoce tu clave. Revísala en el botón «IA».': "{0} no reconeix la teva clau. Revisa-la al botó «IA».",
+    'Tu clave no tiene acceso al modelo «{0}». Elige otro en el botón «IA».': "La teva clau no té accés al model «{0}». Tria’n un altre al botó «IA».",
+    'Tu cuenta de {0} no tiene saldo o ha alcanzado su límite.': "El teu compte de {0} no té saldo o ha arribat al límit.",
+    'El modelo «{0}» no admite imágenes. Elige uno con visión.': "El model «{0}» no admet imatges. Tria’n un amb visió.",
+    'No hay conexión con {0}.': "No hi ha connexió amb {0}.",
+    '{0} no responde ahora mismo. Inténtalo de nuevo en un momento.': "{0} no respon ara mateix. Torna-ho a provar d’aquí a un moment.",
+    'Falta tu clave de IA. Pulsa el botón «IA», arriba.': "Falta la teva clau d’IA. Prem el botó «IA», a dalt.",
+    'OpenAI no responde ahora mismo.': "OpenAI no respon ara mateix.",
+    'El proveedor ha bloqueado la respuesta ({0}).': "El proveïdor ha bloquejat la resposta ({0}).",
+    'La IA no devolvió una respuesta con el formato esperado. Inténtalo de nuevo.': "La IA no ha retornat una resposta amb el format esperat. Torna-ho a provar.",
+    'Primero pega tu clave.': "Primer enganxa la teva clau.",
+    '{0} modelos disponibles en tu clave; escribe o elige uno.': "{0} models disponibles amb la teva clau; escriu-ne o tria’n un.",
+    'Pega tu clave de IA para continuar': "Enganxa la teva clau d’IA per continuar",
+    'El PowerPoint no tiene diapositivas': "El PowerPoint no té diapositives",
+    'Formato no admitido (usa Word, PDF, PowerPoint, texto, imágenes, audio o vídeo)': "Format no admès (fes servir Word, PDF, PowerPoint, text, imatges, àudio o vídeo)",
+    '«{0}» pesa más de 600 MB: exporta solo el audio (MP3 o WAV) y súbelo en su lugar.': "«{0}» pesa més de 600 MB: exporta només l’àudio (MP3 o WAV) i puja’l en lloc seu.",
+    'No se pudo leer el audio de «{0}». Prueba a exportarlo como MP3 o WAV.': "No s’ha pogut llegir l’àudio de «{0}». Prova d’exportar-lo com a MP3 o WAV.",
+    'Para transcribir necesitas una clave de OpenAI o de Gemini (Claude no transcribe audio). Añádela en el botón «IA».': "Per transcriure necessites una clau d’OpenAI o de Gemini (Claude no transcriu àudio). Afegeix-la al botó «IA».",
+    'actual': "actual",
+    'no aparece en tu clave': "no apareix a la teva clau",
+    'Otro modelo (escribirlo)…': "Un altre model (escriure’l)…",
+    'Escribe el nombre exacto del modelo': "Escriu el nom exacte del model",
+    'Cargando los modelos de tu clave…': "Carregant els models de la teva clau…",
+    '{0} modelos disponibles en tu clave: elígelo en el desplegable.': "{0} models disponibles amb la teva clau: tria’l al desplegable.",
+    'Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».': "La teva clau no ha retornat cap model de text. Escriu el nom amb «Un altre model»."
+  },
+  eu: {
+    'Inicio': "Hasiera",
+    'Ayuda': "Laguntza",
+    'IA': "AA",
+    'Pasos': "Urratsak",
+    'Atrás': "Atzera",
+    'Siguiente': "Hurrengoa",
+    'Cerrar': "Itxi",
+    'Cancelar': "Utzi",
+    'Idioma': "Hizkuntza",
+    'Volver al inicio': "Hasierara itzuli",
+    'Inteligencia artificial': "Adimen artifiziala",
+    'Proveedor': "Hornitzailea",
+    'Tu clave de API': "Zure API gakoa",
+    'Ver': "Ikusi",
+    'Modelo': "Eredua",
+    'Ver los modelos de mi clave': "Nire gakoaren ereduak ikusi",
+    'f.ia.ayuda': "Gakoa nabigatzaile honetan bakarrik gordetzen da eta zure hornitzaileari bakarrik bidaltzen zaio. Pertsona bakoitzak berea erabiltzen du eta bere erabilera ordaintzen du. Aukeratu eredu merke bat: erabilera honek ez du ahaltsuena behar.",
+    'Esto es lo que saldría hacia tu proveedor de IA': "Hau bidaliko litzateke zure AA hornitzailera",
+    'f.envio.chk': "Lagina berrikusi dut eta baieztatzen dut nire ordenagailutik atera daitekeela.",
+    'Muestra del envío:': "Bidalketaren lagina:",
+    'Realizada entre': "Egileak",
+    'Realizada por': "Egilea",
+    'Cómo funciona': "Nola dabilen",
+    'Dónde va cada cosa': "Non dagoen bakoitza",
+    'Siempre en tu ordenador': "Beti zure ordenagailuan",
+    'Sale hacia tu proveedor de IA': "Zure AA hornitzailera bidaltzen da",
+    'No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.': "Ezin izan da {0} liburutegia kargatu. Agian blokeatzaile batek edo zure erakundearen sareak eragozten du; probatu beste sare bat edo desaktibatu blokeatzailea orri honetan.",
+    'Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.': "Konexiorik gabe: internet behar da fitxategi mota hau lehen aldiz irekitzeko.",
+    'No se pudo guardar en el navegador (¿demasiado material?)': "Ezin izan da nabigatzailean gorde (material gehiegi?)",
+    'No se pudo guardar en el navegador': "Ezin izan da nabigatzailean gorde",
+    '{0} no reconoce tu clave. Revísala en el botón «IA».': "{0}k ez du zure gakoa ezagutzen. Egiaztatu «AA» botoian.",
+    'Tu clave no tiene acceso al modelo «{0}». Elige otro en el botón «IA».': "Zure gakoak ez du «{0}» eredurako sarbiderik. Aukeratu beste bat «AA» botoian.",
+    'Tu cuenta de {0} no tiene saldo o ha alcanzado su límite.': "Zure {0} kontuak ez du saldorik edo mugara iritsi da.",
+    'El modelo «{0}» no admite imágenes. Elige uno con visión.': "«{0}» ereduak ez du irudirik onartzen. Aukeratu ikusmena duen bat.",
+    'No hay conexión con {0}.': "Ez dago konexiorik {0}-rekin.",
+    '{0} no responde ahora mismo. Inténtalo de nuevo en un momento.': "{0}k ez du erantzuten oraintxe. Saiatu berriro geroxeago.",
+    'Falta tu clave de IA. Pulsa el botón «IA», arriba.': "Zure AA gakoa falta da. Sakatu goiko «AA» botoia.",
+    'OpenAI no responde ahora mismo.': "OpenAIk ez du erantzuten oraintxe.",
+    'El proveedor ha bloqueado la respuesta ({0}).': "Hornitzaileak erantzuna blokeatu du ({0}).",
+    'La IA no devolvió una respuesta con el formato esperado. Inténtalo de nuevo.': "AAk ez du espero zen formatuko erantzunik itzuli. Saiatu berriro.",
+    'Primero pega tu clave.': "Lehenik itsatsi zure gakoa.",
+    '{0} modelos disponibles en tu clave; escribe o elige uno.': "{0} eredu daude erabilgarri zure gakoarekin; idatzi edo aukeratu bat.",
+    'Pega tu clave de IA para continuar': "Itsatsi zure AA gakoa jarraitzeko",
+    'El PowerPoint no tiene diapositivas': "PowerPointak ez du diapositibarik",
+    'Formato no admitido (usa Word, PDF, PowerPoint, texto, imágenes, audio o vídeo)': "Formatu onartezina (erabili Word, PDF, PowerPoint, testua, irudiak, audioa edo bideoa)",
+    '«{0}» pesa más de 600 MB: exporta solo el audio (MP3 o WAV) y súbelo en su lugar.': "«{0}»k 600 MB baino gehiago ditu: esportatu audioa bakarrik (MP3 edo WAV) eta igo hori.",
+    'No se pudo leer el audio de «{0}». Prueba a exportarlo como MP3 o WAV.': "Ezin izan da «{0}»ren audioa irakurri. Saiatu MP3 edo WAV gisa esportatzen.",
+    'Para transcribir necesitas una clave de OpenAI o de Gemini (Claude no transcribe audio). Añádela en el botón «IA».': "Transkribatzeko OpenAI edo Gemini gako bat behar duzu (Claudek ez du audiorik transkribatzen). Gehitu «AA» botoian.",
+    'actual': "oraingoa",
+    'no aparece en tu clave': "ez dago zure gakoan",
+    'Otro modelo (escribirlo)…': "Beste eredu bat (idatzi)…",
+    'Escribe el nombre exacto del modelo': "Idatzi ereduaren izen zehatza",
+    'Cargando los modelos de tu clave…': "Zure gakoaren ereduak kargatzen…",
+    '{0} modelos disponibles en tu clave: elígelo en el desplegable.': "{0} eredu daude zure gakoarekin: aukeratu zabaltzen den zerrendan.",
+    'Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».': "Zure gakoak ez du testu-eredurik itzuli. Idatzi izena «Beste eredu bat» aukerarekin."
+  },
+  gl: {
+    'Inicio': "Inicio",
+    'Ayuda': "Axuda",
+    'IA': "IA",
+    'Pasos': "Pasos",
+    'Atrás': "Atrás",
+    'Siguiente': "Seguinte",
+    'Cerrar': "Pechar",
+    'Cancelar': "Cancelar",
+    'Idioma': "Idioma",
+    'Volver al inicio': "Volver ao inicio",
+    'Inteligencia artificial': "Intelixencia artificial",
+    'Proveedor': "Provedor",
+    'Tu clave de API': "A túa clave de API",
+    'Ver': "Ver",
+    'Modelo': "Modelo",
+    'Ver los modelos de mi clave': "Ver os modelos da miña clave",
+    'f.ia.ayuda': "A clave gárdase só neste navegador e envíase unicamente ao teu provedor. Cada persoa usa a súa e paga o seu uso. Escolle un modelo económico: este uso non precisa o máis potente.",
+    'Esto es lo que saldría hacia tu proveedor de IA': "Isto é o que sairía cara ao teu provedor de IA",
+    'f.envio.chk': "Revisei a mostra e confirmo que pode saír do meu ordenador.",
+    'Muestra del envío:': "Mostra do envío:",
+    'Realizada entre': "Realizada por",
+    'Realizada por': "Realizada por",
+    'Cómo funciona': "Como funciona",
+    'Dónde va cada cosa': "Onde vai cada cousa",
+    'Siempre en tu ordenador': "Sempre no teu ordenador",
+    'Sale hacia tu proveedor de IA': "Sae cara ao teu provedor de IA",
+    'No se pudo cargar la librería {0}. Puede que un bloqueador o la red de tu institución la impida; prueba otra red o desactiva el bloqueador en esta página.': "Non se puido cargar a biblioteca {0}. Quizais un bloqueador ou a rede da túa institución o impida; proba outra rede ou desactiva o bloqueador nesta páxina.",
+    'Sin conexión: hace falta internet para abrir este tipo de fichero la primera vez.': "Sen conexión: cómpre internet para abrir este tipo de ficheiro a primeira vez.",
+    'No se pudo guardar en el navegador (¿demasiado material?)': "Non se puido gardar no navegador (demasiado material?)",
+    'No se pudo guardar en el navegador': "Non se puido gardar no navegador",
+    '{0} no reconoce tu clave. Revísala en el botón «IA».': "{0} non recoñece a túa clave. Revísaa no botón «IA».",
+    'Tu clave no tiene acceso al modelo «{0}». Elige otro en el botón «IA».': "A túa clave non ten acceso ao modelo «{0}». Escolle outro no botón «IA».",
+    'Tu cuenta de {0} no tiene saldo o ha alcanzado su límite.': "A túa conta de {0} non ten saldo ou alcanzou o seu límite.",
+    'El modelo «{0}» no admite imágenes. Elige uno con visión.': "O modelo «{0}» non admite imaxes. Escolle un con visión.",
+    'No hay conexión con {0}.': "Non hai conexión con {0}.",
+    '{0} no responde ahora mismo. Inténtalo de nuevo en un momento.': "{0} non responde agora mesmo. Ténteo de novo nun momento.",
+    'Falta tu clave de IA. Pulsa el botón «IA», arriba.': "Falta a túa clave de IA. Preme o botón «IA», arriba.",
+    'OpenAI no responde ahora mismo.': "OpenAI non responde agora mesmo.",
+    'El proveedor ha bloqueado la respuesta ({0}).': "O provedor bloqueou a resposta ({0}).",
+    'La IA no devolvió una respuesta con el formato esperado. Inténtalo de nuevo.': "A IA non devolveu unha resposta co formato esperado. Ténteo de novo.",
+    'Primero pega tu clave.': "Primeiro pega a túa clave.",
+    '{0} modelos disponibles en tu clave; escribe o elige uno.': "{0} modelos dispoñibles na túa clave; escribe ou escolle un.",
+    'Pega tu clave de IA para continuar': "Pega a túa clave de IA para continuar",
+    'El PowerPoint no tiene diapositivas': "O PowerPoint non ten diapositivas",
+    'Formato no admitido (usa Word, PDF, PowerPoint, texto, imágenes, audio o vídeo)': "Formato non admitido (usa Word, PDF, PowerPoint, texto, imaxes, audio ou vídeo)",
+    '«{0}» pesa más de 600 MB: exporta solo el audio (MP3 o WAV) y súbelo en su lugar.': "«{0}» pesa máis de 600 MB: exporta só o audio (MP3 ou WAV) e súbeo no seu lugar.",
+    'No se pudo leer el audio de «{0}». Prueba a exportarlo como MP3 o WAV.': "Non se puido ler o audio de «{0}». Proba a exportalo como MP3 ou WAV.",
+    'Para transcribir necesitas una clave de OpenAI o de Gemini (Claude no transcribe audio). Añádela en el botón «IA».': "Para transcribir precisas unha clave de OpenAI ou de Gemini (Claude non transcribe audio). Engádea no botón «IA».",
+    'actual': "actual",
+    'no aparece en tu clave': "non aparece na túa clave",
+    'Otro modelo (escribirlo)…': "Outro modelo (escribilo)…",
+    'Escribe el nombre exacto del modelo': "Escribe o nome exacto do modelo",
+    'Cargando los modelos de tu clave…': "Cargando os modelos da túa clave…",
+    '{0} modelos disponibles en tu clave: elígelo en el desplegable.': "{0} modelos dispoñibles na túa clave: escólleo no despregable.",
+    'Tu clave no devolvió ningún modelo de texto. Escribe el nombre con «Otro modelo».': "A túa clave non devolveu ningún modelo de texto. Escribe o nome con «Outro modelo»."
+  }
+};
+
+const _dict = l => ({...(I18N_BASE[l] || {}), ...((typeof I18N !== 'undefined' && I18N && I18N[l]) || {})});
+const D = () => _D || (_D = _dict(LANG));
+/* t(clave, ...args): traduce y rellena {0}, {1}…  Si falta la traducción devuelve el español (la clave o I18N.es[clave]): nunca texto vacío. */
+function t(k, ...a) {
+  let s = D()[k];
+  if (s === undefined && typeof I18N !== 'undefined' && I18N && I18N.es) s = I18N.es[k];
+  if (s === undefined) s = k;
+  return a.length ? String(s).replace(/\{(\d+)\}/g, (m, i) => a[+i] ?? m) : String(s);
+}
+function applyI18n(root = document) {
+  document.documentElement.lang = LANG;
+  root.querySelectorAll('[data-i18n]').forEach(el => {
+    if (el._es === undefined) el._es = el.innerHTML;                       // el español original, tal como está en el HTML
+    const v = LANG === 'es' ? undefined : D()[el.dataset.i18n];
+    el.innerHTML = v !== undefined ? v : el._es;
+  });
+  root.querySelectorAll('[data-i18n-attr]').forEach(el => {
+    el._esA = el._esA || {};
+    el.dataset.i18nAttr.split(';').forEach(par => {
+      const [at, k] = par.split(':').map(x => x.trim()); if (!at || !k) return;
+      if (!(at in el._esA)) el._esA[at] = el.getAttribute(at) ?? '';
+      const v = LANG === 'es' ? undefined : D()[k]; el.setAttribute(at, v !== undefined ? v : el._esA[at]);
+    });
+  });
+  if (applyI18n._tit === undefined) applyI18n._tit = document.title;
+  const tit = LANG === 'es' ? undefined : D()['title']; document.title = tit !== undefined ? tit : applyI18n._tit;
+}
+function setLang(l) {
+  if (!langsOn().includes(l)) l = langsOn()[0];
+  LANG = l; _D = null; try { localStorage.setItem(APP + '_lang', l); } catch {}
+  applyI18n(); const s = $('selLang'); if (s) s.value = l;
+  window.dispatchEvent(new CustomEvent('langchange', {detail: l}));
+}
+/* llamada UNA vez desde iniciaUI(). Orden de preferencia: ?lang=xx en la URL (para compartir enlaces) → elección guardada → español. */
+function initI18n() {
+  let l = 'es'; try { l = localStorage.getItem(APP + '_lang') || 'es'; } catch {}
+  const q = new URLSearchParams(location.search).get('lang'); if (q) l = q;
+  LANG = langsOn().includes(l) ? l : 'es'; _D = null;
+  const sel = $('selLang');
+  if (sel) { sel.innerHTML = langsOn().map(x => `<option value="${x}">${LANGS[x]}</option>`).join(''); sel.value = LANG; sel.onchange = () => setLang(sel.value); }
+  if (langsOn().length < 2 && $('langBox')) $('langBox').remove();
+  applyI18n();
+}
+/* Para las pruebas: claves del HTML, pasos, botones y glosario que no tienen traducción en algún idioma activo ([] = completo). */
+function i18nFaltan() {
+  const keys = new Set(), lit = [];
+  document.querySelectorAll('[data-i18n]').forEach(el => keys.add(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(p => { const k = (p.split(':')[1] || '').trim(); if (k) keys.add(k); }));
+  if (typeof STEPS !== 'undefined') lit.push(...STEPS);
+  if (typeof NAV !== 'undefined') NAV.forEach(n => lit.push(n[0], n[1]));
+  if (typeof GLOS !== 'undefined') GLOS.forEach(g => lit.push(g[0], g[1]));
+  if (typeof HUBS !== 'undefined') lit.push(...HUBS);
+  const out = [];
+  langsOn().filter(l => l !== 'es').forEach(l => { const d = _dict(l); [...keys, ...lit.filter(Boolean)].forEach(k => { if (d[k] === undefined) out.push(l + ': ' + String(k).slice(0, 60)); }); });
+  return out;
+}
+
+/* ── salidas: Word, ZIP y CSV SIN LIBRERÍAS EXTERNAS ─────────────────────────────────────────────────────────
+   Antes se cargaban docx y JSZip desde cdnjs al pulsar «Descargar»: si la URL de cdnjs cambiaba, si había un
+   bloqueador, un proxy de la universidad o no había red, salía «No se pudo cargar una librería: ¿hay conexión?».
+   Ahora el .docx y el .zip se escriben aquí mismo (Office Open XML + ZIP), funcionan sin conexión, con file:// y
+   con cualquier CSP. No toques esto para volver a usar window.docx: si una app necesita algo que wordDeMarkdown
+   no hace, amplía este escritor (párrafos, tablas, estilos), no añadas una dependencia de red. */
+
+/* ZIP: crc32 + cabeceras locales y directorio central. Comprime con deflate-raw si el navegador lo permite
+   (CompressionStream); si no, guarda sin comprimir (método 0), que Word y cualquier descompresor leen igual. */
+const _CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = _CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+async function _bytes(c) {
+  if (c instanceof Uint8Array) return c;
+  if (c instanceof ArrayBuffer) return new Uint8Array(c);
+  if (ArrayBuffer.isView(c)) return new Uint8Array(c.buffer, c.byteOffset, c.byteLength);
+  if (c instanceof Blob) return new Uint8Array(await c.arrayBuffer());
+  return new TextEncoder().encode(String(c ?? ''));
+}
+async function _deflate(b) {
+  if (typeof CompressionStream !== 'function' || b.length < 200) return null;
+  try { return new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); } catch { return null; }
+}
+async function zipBytes(ficheros, {comprimir = true} = {}) {
+  const d = new Date(), tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dt = ((Math.max(d.getFullYear(), 1980) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const loc = [], cen = []; let off = 0;
+  for (const [nombre, cont] of Object.entries(ficheros)) {
+    const nm = new TextEncoder().encode(nombre), raw = await _bytes(cont), crc = crc32(raw);
+    const def = comprimir ? await _deflate(raw) : null, usa = def && def.length < raw.length, dat = usa ? def : raw, met = usa ? 8 : 0;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, met, true); h.setUint16(10, tm, true); h.setUint16(12, dt, true);
+    h.setUint32(14, crc, true); h.setUint32(18, dat.length, true); h.setUint32(22, raw.length, true); h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, met, true); c.setUint16(12, tm, true); c.setUint16(14, dt, true);
+    c.setUint32(16, crc, true); c.setUint32(20, dat.length, true); c.setUint32(24, raw.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    loc.push(new Uint8Array(h.buffer), nm, dat); cen.push(new Uint8Array(c.buffer), nm);
+    off += 30 + nm.length + dat.length;
+  }
+  const tamCen = cen.reduce((s, x) => s + x.length, 0), n = Object.keys(ficheros).length, e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, n, true); e.setUint16(10, n, true); e.setUint32(12, tamCen, true); e.setUint32(16, off, true);
+  return new Blob([...loc, ...cen, new Uint8Array(e.buffer)]);
+}
+/* zipDe({'nombre.ext': Blob|string|Uint8Array|ArrayBuffer, …}) → Blob .zip  (misma firma que la versión con JSZip) */
+async function zipDe(ficheros) { const b = await zipBytes(ficheros); return new Blob([b], {type: 'application/zip'}); }
+
+/* Word (.docx) escrito a mano: Office Open XML mínimo, válido para Word, LibreOffice, Pages y Google Docs. */
+const _x = s => String(s ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+/* un «run» de texto: {text, b, i, col, s (medios puntos; null = el del estilo), font (null = el del estilo)} */
+function wRun({text = '', b, i, col, s = 22, font = 'Arial'} = {}) {
+  const pr = `<w:rPr>${font ? `<w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}"/>` : ''}${b ? '<w:b/>' : ''}${i ? '<w:i/>' : ''}${col ? `<w:color w:val="${col}"/>` : ''}${s ? `<w:sz w:val="${s}"/><w:szCs w:val="${s}"/>` : ''}</w:rPr>`;   // s/font = null → los del estilo
+  return String(text).split('\n').map((l, k) => (k ? '<w:br/>' : '') + `<w:t xml:space="preserve">${_x(l)}</w:t>`).map(t => `<w:r>${pr}${t}</w:r>`).join('');
+}
+/* **negrita**, *cursiva* y `código` en línea → runs */
+function wInline(tx, base = {}) {   // base.b pone todo en negrita (cabeceras de tabla)
+  return String(tx).split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`)/).filter(Boolean).map(p =>
+    p.startsWith('**') ? wRun({...base, text: p.slice(2, -2), b: true}) :
+    p.startsWith('`') ? wRun({...base, text: p.slice(1, -1), font: 'Consolas'}) :
+    /^\*[^*\s]/.test(p) && p.endsWith('*') && p.length > 2 ? wRun({...base, text: p.slice(1, -1), i: true}) :
+    wRun({...base, text: p})).join('');
+}
+/* un párrafo: o = {h (1-3 → Título 1-3), c (centrado), after (twips), ind (sangría, twips), plain, s, b, i, col} */
+function wPara(tx, o = {}) {
+  const ppr = (o.h ? `<w:pStyle w:val="Heading${o.h}"/>` : '') + `<w:spacing w:after="${o.after ?? 110}"/>` + (o.ind ? `<w:ind w:left="${o.ind}" w:hanging="${o.hang ?? 0}"/>` : '') + (o.c ? '<w:jc w:val="center"/>' : '');
+  const s = o.h ? null : o.s;   // los títulos toman tamaño y color de su estilo (Heading1-3)
+  const runs = o.plain ? wRun({text: tx, s, b: o.b, i: o.i, col: o.col}) : wInline(tx, {s, i: o.i, col: o.col});
+  return `<w:p><w:pPr>${ppr}</w:pPr>${runs}</w:p>`;
+}
+/* tabla a partir de filas de celdas (la primera, cabecera en negrita) */
+function wTabla(filas) {
+  const nc = Math.max(...filas.map(f => f.length)), w = Math.floor(9000 / nc), bd = '<w:top w:val="single" w:sz="4" w:color="BFC9D4"/><w:left w:val="single" w:sz="4" w:color="BFC9D4"/><w:bottom w:val="single" w:sz="4" w:color="BFC9D4"/><w:right w:val="single" w:sz="4" w:color="BFC9D4"/><w:insideH w:val="single" w:sz="4" w:color="BFC9D4"/><w:insideV w:val="single" w:sz="4" w:color="BFC9D4"/>';
+  const fila = (f, cab) => '<w:tr>' + Array.from({length: nc}, (_, j) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${cab ? '<w:shd w:val="clear" w:color="auto" w:fill="EEF2F6"/>' : ''}</w:tcPr><w:p><w:pPr><w:spacing w:after="40"/></w:pPr>${wInline(f[j] ?? '', {s: 20, b: cab})}</w:p></w:tc>`).join('') + '</w:tr>';
+  return `<w:tbl><w:tblPr><w:tblW w:w="${w * nc}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${'<w:gridCol w:w="' + w + '"/>'.repeat(nc)}</w:tblGrid>${filas.map((f, k) => fila(f, k === 0)).join('')}</w:tbl><w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>`;
+}
+/* wordDeXml(cuerpoXml, {creador, titulo}) → Blob .docx   (para apps que montan su propio cuerpo con wPara/wTabla) */
+async function wordDeXml(cuerpo, {creador = '', titulo = ''} = {}) {
+  const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const hs = [[1, 32, '0F2237'], [2, 26, '0F2237'], [3, 23, '33475B']].map(([n, s, col]) => `<w:style w:type="paragraph" w:styleId="Heading${n}"><w:name w:val="heading ${n}"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="${n === 1 ? 280 : 200}" w:after="100"/><w:outlineLvl w:val="${n - 1}"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:b/><w:color w:val="${col}"/><w:sz w:val="${s}"/><w:szCs w:val="${s}"/></w:rPr></w:style>`).join('');
+  const lang = typeof LANG === 'string' ? ({es: 'es-ES', ca: 'ca-ES', eu: 'eu-ES', gl: 'gl-ES', en: 'en-GB', pt: 'pt-PT'}[LANG] || 'es-ES') : 'es-ES';
+  const ahora = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  return new Blob([await zipBytes({
+    '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>',
+    '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>',
+    'docProps/core.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${_x(titulo)}</dc:title><dc:creator>${_x(creador)}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${ahora}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${ahora}</dcterms:modified></cp:coreProperties>`,
+    'word/_rels/document.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'word/styles.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial" w:eastAsia="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="${lang}"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="110" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>${hs}</w:styles>`,
+    'word/document.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${W}><w:body>${cuerpo}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1418" w:right="1418" w:bottom="1418" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`
+  })], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+/* wordDeMarkdown(md, {titulo, subtitulo, pie, kicker}) → Blob .docx
+   Convierte #/##/### encabezados, listas, tablas Markdown (| a | b |), **negritas**, *cursivas* y `código`. */
+async function wordDeMarkdown(md, {titulo = '', subtitulo = '', pie = '', kicker = ''} = {}) {
+  const k = [];
+  if (kicker) k.push(wPara(String(kicker).toUpperCase(), {c: true, b: true, col: 'E4572E', s: 20, plain: true}));
+  if (titulo) k.push(wPara(titulo, {c: true, b: true, s: 32, plain: true}));
+  if (subtitulo) k.push(wPara(subtitulo, {c: true, col: '5D7691', s: 20, after: 260, plain: true}));
+  const lineas = String(md ?? '').replace(/\r\n?/g, '\n').split('\n'); let tabla = [];
+  const cierraTabla = () => { if (tabla.length) { k.push(wTabla(tabla)); tabla = []; } };
+  for (const l of lineas) {
+    const t = l.trimEnd(); let m;
+    if (/^\s*\|.*\|\s*$/.test(t)) { if (!/^\s*\|[\s:|-]+\|\s*$/.test(t)) tabla.push(t.trim().slice(1, -1).split('|').map(c => c.trim())); continue; }
+    cierraTabla(); if (!t.trim() || /^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(t)) continue;
+    if (m = t.match(/^(#{1,6})\s+(.*)/)) k.push(wPara(m[2], {h: Math.min(m[1].length, 3)}));
+    else if (m = t.match(/^(\s*)[-*•]\s+(.*)/)) k.push(wPara('•\t' + m[2], {ind: 360 + Math.min(m[1].length, 8) * 90, hang: 240, after: 60}));
+    else if (m = t.match(/^(\s*)(\d+[.)])\s+(.*)/)) k.push(wPara(m[2] + '\t' + m[3], {ind: 400 + Math.min(m[1].length, 8) * 90, hang: 320, after: 60}));
+    else if (m = t.match(/^>\s?(.*)/)) k.push(wPara(m[1], {ind: 360, i: true, col: '5D7691'}));
+    else k.push(wPara(t));
+  }
+  cierraTabla();
+  if (pie) k.push(wPara(pie, {i: true, s: 16, col: '8899AA', plain: true}));
+  const app = typeof APP_NAME === 'string' ? APP_NAME : (typeof APP === 'string' ? APP : '');
+  return wordDeXml(k.join(''), {creador: app, titulo: titulo || app});
+}
+/* csv con BOM, separador «;» (Excel en español) y comillas escapadas */
+const csvq = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csvDe = (cab, filas) => '\ufeff' + [cab, ...filas].map(f => f.map(csvq).join(';')).join('\r\n');
+
+/* ══ Diccionarios de ValorIA para data-i18n y t(). El resto va en línea «es|en|pt».
+      Claves con punto: el español está en el HTML. Tríos: [español, inglés, portugués]. ══ */
+const _CLAVES = {
+  'title': ['', "ValorIA · From facial assessment by thirds and layers to a phased plan", "ValorIA · Do diagnóstico facial por terços e por camadas a um plano por fases"],
+  'hero.eyebrow': ['', "EstéticIA Kit · Master's in Comprehensive Aesthetic and Anti-Ageing Medicine · Miguel Hernández University of Elche", "Kit EstéticIA · Mestrado de Medicina Estética Integral e Antienvelhecimento · Universidade Miguel Hernández de Elche"],
+  'hero.h1': ['', "From assessment <em>to plan</em>", "Do diagnóstico <em>ao plano</em>"],
+  'hero.lede': ['', "Examine the face by thirds and by layers, at rest and on animation. ValorIA turns it into a phased plan, from support to skin, with the danger zones of each technique and an estimate the patient understands. No AI and no connection.", "Explore o rosto por terços e por camadas, em repouso e com a expressão. O ValorIA converte-o num plano por fases, do suporte à pele, com as zonas de risco de cada técnica e um orçamento que a doente compreende. Sem IA e sem ligação."],
+  's.empezar': ['', "Start an assessment", "Começar uma avaliação"],
+  's.ejemplo': ['', "See an example", "Ver um exemplo"],
+  's.ban': ['', "A deep fold is almost never fixed by filling the fold. If the cheekbone or the jaw has lost support, the cause is treated first and the fold is reassessed afterwards.", "Um sulco marcado quase nunca se resolve preenchendo o sulco. Se a maçã do rosto ou a mandíbula perderam suporte, trata-se primeiro a causa e reavalia-se depois."],
+  's.j1b': ['', "Patient and skin", "Doente e pele"], 's.j1s': ['', "Reason for consultation, Fitzpatrick, Glogau and skin quality. It can read the AnamnesIA file.", "Motivo da consulta, Fitzpatrick, Glogau e qualidade da pele. Pode ler a ficha do AnamnesIA."],
+  's.j2b': ['', "Examination", "Exploração"], 's.j2s': ['', "Each area at rest and on animation, from 0 to 4, and the layer that causes it.", "Cada zona em repouso e com a expressão, de 0 a 4, e a camada que o causa."],
+  's.j3b': ['', "Phased plan", "Plano por fases"], 's.j3s': ['', "Support, expression and contour, skin. With danger zones and an estimate.", "Suporte, expressão e contorno, pele. Com zonas de risco e orçamento."],
+  's.j4b': ['', "Documents", "Documentos"], 's.j4s': ['', "The plan for the patient, in her language, and the report for the clinical record.", "O plano para a doente, no seu idioma, e o relatório para o processo clínico."],
+  's.zl': ['', "<li>The examination, the plan and the prices, stored in this browser</li><li>The plan comes from written rules, with no AI and nothing sent</li><li>The app proposes; the indication and the final plan are yours</li>", "<li>A exploração, o plano e os preços, guardados neste navegador</li><li>O plano resulta de regras escritas, sem IA e sem enviar nada</li><li>A app propõe; a indicação e o plano definitivo são seus</li>"],
+  's.pac.lede': ['', "What concerns the patient and what her skin is like. If you have her AnamnesIA file, load it.", "O que preocupa a doente e como é a sua pele. Se tiver a sua ficha do AnamnesIA, carregue-a."],
+  's.exp.lede': ['', "Score each area at rest and on animation (0 to 4) and tick which layer causes it. Only areas scoring 2 or more count towards the plan.", "Pontue cada zona em repouso e com a expressão (0 a 4) e assinale que camada o causa. Só contam para o plano as zonas com 2 ou mais."],
+  's.plan.lede': ['', "Review each proposal: technique, quantity and whether to include it. Enter your prices for the estimate.", "Reveja cada proposta: técnica, quantidade e se a inclui. Indique os seus preços para o orçamento."],
+  's.doc.lede': ['', "The plan explained for the patient and the assessment report for the clinical record.", "O plano explicado para a doente e o relatório de avaliação para o processo clínico."],
+  'f.pie': ['', "Support tool for doctors: it organises the examination and proposes a plan that you decide on. It does not replace your clinical judgement or the product information. Your data are stored only in this browser.", "Ferramenta de apoio para médicos: organiza a exploração e propõe um plano que é o médico a decidir. Não substitui o seu juízo clínico nem os resumos das características dos produtos. Os seus dados ficam guardados apenas neste navegador."]
+};
+const _TRI = [
+  ['Paso 1 de 4', 'Step 1 of 4', 'Passo 1 de 4'], ['Paso 2 de 4', 'Step 2 of 4', 'Passo 2 de 4'], ['Paso 3 de 4', 'Step 3 of 4', 'Passo 3 de 4'], ['Paso 4 de 4', 'Step 4 of 4', 'Passo 4 de 4'],
+  ['Paciente y piel', 'Patient and skin', 'Doente e pele'], ['Exploración', 'Examination', 'Exploração'], ['Plan por fases', 'Phased plan', 'Plano por fases'], ['Documentos', 'Documents', 'Documentos'],
+  ['Inicio', 'Home', 'Início'], ['Paciente', 'Patient', 'Doente'], ['Plan', 'Plan', 'Plano'],
+  ['Empezar una valoración', 'Start an assessment', 'Começar uma avaliação'], ['Siguiente: exploración', 'Next: examination', 'Seguinte: exploração'], ['Siguiente: plan', 'Next: plan', 'Seguinte: plano'], ['Siguiente: documentos', 'Next: documents', 'Seguinte: documentos'], ['Volver al inicio', 'Back to home', 'Voltar ao início'],
+  ['Prueba el ejemplo: una paciente con pérdida de soporte en el tercio medio.', 'Try the example: a patient with loss of support in the middle third.', 'Experimente o exemplo: uma doente com perda de suporte no terço médio.'],
+  ['Si tienes la ficha de AnamnesIA, cárgala: trae el fototipo y las contraindicaciones.', 'If you have the AnamnesIA file, load it: it brings the phototype and contraindications.', 'Se tiver a ficha do AnamnesIA, carregue-a: traz o fototipo e as contraindicações.'],
+  ['Solo entran en el plan las zonas de 2 o más con una capa marcada.', 'Only areas scoring 2 or more with a layer ticked go into the plan.', 'Só entram no plano as zonas com 2 ou mais e uma camada assinalada.'],
+  ['Lo que no incluyas no sale en el plan de la paciente.', 'Whatever you do not include does not appear in the patient plan.', 'O que não incluir não aparece no plano da doente.'],
+  ['El informe lleva las zonas de riesgo; el plan de la paciente, no.', 'The report includes the danger zones; the patient plan does not.', 'O relatório inclui as zonas de risco; o plano da doente, não.'],
+  ['¿Qué es ValorIA?', 'What is ValorIA?', 'O que é o ValorIA?'],
+  ['La segunda app del Kit EstéticIA: convierte la exploración facial por tercios y por capas en un plan por fases que la paciente entiende.', 'The second app of the EstéticIA Kit: it turns the facial examination by thirds and layers into a phased plan the patient understands.', 'A segunda app do Kit EstéticIA: converte a exploração facial por terços e por camadas num plano por fases que a doente compreende.'],
+  ['Por capas', 'By layers', 'Por camadas'],
+  ['Piel, grasa, músculo y hueso. El envejecimiento afecta a todas: el hueso se reabsorbe, los compartimentos grasos pierden volumen y descienden, el músculo marca el gesto y la piel pierde calidad.', 'Skin, fat, muscle and bone. Ageing affects them all: bone resorbs, fat compartments lose volume and descend, muscle marks expression and skin loses quality.', 'Pele, gordura, músculo e osso. O envelhecimento afeta todas: o osso reabsorve-se, os compartimentos de gordura perdem volume e descem, o músculo marca a expressão e a pele perde qualidade.'],
+  ['Soporte antes que surco', 'Support before the fold', 'Suporte antes do sulco'],
+  ['Si el surco nasogeniano, la ojera o las líneas de marioneta dependen de la pérdida de soporte del pómulo o de la mandíbula, el plan trata primero el soporte y reevalúa el surco a las 4 semanas.', 'If the nasolabial fold, the tear trough or the marionette lines depend on loss of support in the cheekbone or the jaw, the plan treats the support first and reassesses the fold at 4 weeks.', 'Se o sulco nasogeniano, a olheira ou as linhas de marioneta dependem da perda de suporte da maçã do rosto ou da mandíbula, o plano trata primeiro o suporte e reavalia o sulco às 4 semanas.'],
+  ['Escalas', 'Scales', 'Escalas'],
+  ['Fitzpatrick (fototipo, respuesta al sol), Glogau (grado de fotoenvejecimiento) y una gravedad de 0 a 4 por zona, en reposo y con el gesto, como las escalas validadas de la serie Merz.', 'Fitzpatrick (phototype, response to sun), Glogau (degree of photoageing) and a severity from 0 to 4 per area, at rest and on animation, like the validated Merz scales.', 'Fitzpatrick (fototipo, resposta ao sol), Glogau (grau de fotoenvelhecimento) e uma gravidade de 0 a 4 por zona, em repouso e com a expressão, como as escalas validadas da série Merz.'],
+  ['Zonas de riesgo', 'Danger zones', 'Zonas de risco'],
+  ['Para cada técnica propuesta, el informe recoge las arterias o estructuras que hay que respetar en esa zona. La nariz, la glabela y el surco nasogeniano son las de mayor riesgo de complicación vascular grave.', 'For each proposed technique, the report lists the arteries or structures to respect in that area. The nose, the glabella and the nasolabial fold carry the highest risk of serious vascular complications.', 'Para cada técnica proposta, o relatório indica as artérias ou estruturas a respeitar nessa zona. O nariz, a glabela e o sulco nasogeniano são as de maior risco de complicação vascular grave.'],
+  ['Límites', 'Limits', 'Limites'],
+  ['La app ordena y propone; no sustituye tu juicio clínico, las fichas técnicas ni la formación práctica en anatomía.', 'The app organises and proposes; it does not replace your clinical judgement, the product information or hands-on anatomy training.', 'A app organiza e propõe; não substitui o seu juízo clínico, os resumos das características dos produtos nem a formação prática em anatomia.']
+];
+const I18N = {en: {}, pt: {}};
+for (const [k, [, en, pt]] of Object.entries(_CLAVES)) { I18N.en[k] = en; I18N.pt[k] = pt; }
+for (const [es, en, pt] of _TRI) { I18N.en[es] = en; I18N.pt[es] = pt; }
+
+/* ══ NÚCLEO DE ValorIA (lógica pura, sin DOM: se prueba en Node con tests/test_nucleo.js).
+      Exploración facial por tercios y por capas → plan por fases (soporte, gesto y contorno, piel) con zonas de riesgo y presupuesto.
+      Lee la ficha de AnamnesIA (kitesteticia-paciente/1). Sin IA. Textos «es|en|pt». ══ */
+const _LI = {es: 0, en: 1, pt: 2};
+const T3 = s => { const p = String(s).split('|'); return p[_LI[typeof LANG === 'string' ? LANG : 'es']] ?? p[0]; };
+const T3f = (s, ...a) => T3(s).replace(/\{(\d)\}/g, (_, i) => a[+i]);
+const Tl = (s, l) => { const p = String(s).split('|'); return p[_LI[l]] ?? p[0]; };
+const num = v => { const x = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(x) ? x : NaN; };
+
+const FUENTES = [
+  'Fitzpatrick TB. The validity and practicality of sun-reactive skin types I through VI. Arch Dermatol. 1988;124(6):869-71.',
+  'Glogau RG. Aesthetic and anatomic analysis of the aging skin. Semin Cutan Med Surg. 1996;15(3):134-8.',
+  'Flynn TC et al. Validated assessment scales for the upper face (y escalas de la serie Merz para tercio medio, inferior y cuello). Dermatol Surg. 2012;38(2 Spec No.):309-19.',
+  'Rohrich RJ, Pessa JE. The fat compartments of the face: anatomy and clinical implications for cosmetic surgery. Plast Reconstr Surg. 2007;119(7):2219-27.',
+  'Mendelson B, Wong CH. Changes in the facial skeleton with aging: implications and clinical applications in facial rejuvenation. Aesthetic Plast Surg. 2012;36(4):753-60.',
+  'Scheuer JF 3rd et al. Anatomy of the facial danger zones: maximizing safety during soft-tissue filler injections. Plast Reconstr Surg. 2017;139(1):50e-58e.',
+  'de Maio M. MD Codes™: a methodological approach to facial aesthetic treatment with injectable hyaluronic acid fillers. Aesthetic Plast Surg. 2021;45(2):690-709.'
+];
+
+/* técnicas (mismos identificadores que AnamnesIA) y unidad de presupuesto */
+const TEC = {
+  tox: ['Toxina botulínica|Botulinum toxin|Toxina botulínica', 'zona|area|zona', 'zonas|areas|zonas'],
+  ah: ['Ácido hialurónico|Hyaluronic acid|Ácido hialurónico', 'jeringa|syringe|seringa', 'jeringas|syringes|seringas'],
+  bio: ['Bioestimulador|Biostimulator|Bioestimulador', 'vial|vial|frasco', 'viales|vials|frascos'],
+  hil: ['Hilos tensores|Thread lifting|Fios tensores', 'hilo|thread|fio', 'hilos|threads|fios'],
+  peel: ['Peeling químico|Chemical peel|Peeling químico', 'sesión|session|sessão', 'sesiones|sessions|sessões'],
+  meso: ['Mesoterapia o potenciador cutáneo|Mesotherapy or skin booster|Mesoterapia ou potenciador cutâneo', 'sesión|session|sessão', 'sesiones|sessions|sessões'],
+  laser: ['Láser o luz pulsada|Laser or pulsed light|Laser ou luz pulsada', 'sesión|session|sessão', 'sesiones|sessions|sessões'],
+  rf: ['Radiofrecuencia o ultrasonidos focalizados|Radiofrequency or focused ultrasound|Radiofrequência ou ultrassons focalizados', 'sesión|session|sessão', 'sesiones|sessions|sessões'],
+  doc: ['Ácido desoxicólico|Deoxycholic acid|Ácido desoxicólico', 'sesión|session|sessão', 'sesiones|sessions|sessões']
+};
+const CAPAS = {piel: 'Piel|Skin|Pele', grasa: 'Grasa|Fat|Gordura', musculo: 'Músculo|Muscle|Músculo', hueso: 'Hueso y soporte|Bone and support|Osso e suporte'};
+const TERCIOS = {sup: 'Tercio superior|Upper third|Terço superior', med: 'Tercio medio|Middle third|Terço médio', inf: 'Tercio inferior|Lower third|Terço inferior', cue: 'Cuello y submentón|Neck and submental area|Pescoço e região submentoniana'};
+/* zonas: [nombre, tercio, riesgo vascular para rellenos (2 alto · 1 medio · 0), se explora con gesto, {capa: [técnicas]}] */
+const ZONAS = {
+  fre: ['Frente|Forehead|Fronte', 'sup', 2, 1, {musculo: ['tox'], piel: ['peel', 'laser']}],
+  gla: ['Glabela|Glabella|Glabela', 'sup', 2, 1, {musculo: ['tox']}],
+  pat: ['Patas de gallo|Crow\'s feet|Pés de galinha', 'sup', 0, 1, {musculo: ['tox'], piel: ['laser', 'peel']}],
+  sie: ['Sien|Temple|Têmpora', 'sup', 2, 0, {grasa: ['ah', 'bio'], hueso: ['ah', 'bio']}],
+  inf: ['Surco lagrimal y ojera|Tear trough|Sulco lacrimal e olheira', 'med', 2, 0, {grasa: ['ah'], piel: ['meso', 'laser']}],
+  mal: ['Pómulo|Cheekbone|Maçã do rosto', 'med', 0, 0, {grasa: ['ah', 'bio'], hueso: ['ah', 'bio'], piel: ['rf']}],
+  sng: ['Surco nasogeniano|Nasolabial fold|Sulco nasogeniano', 'med', 2, 0, {grasa: ['ah'], piel: ['ah', 'meso']}],
+  nar: ['Nariz|Nose|Nariz', 'med', 2, 0, {hueso: ['ah']}],
+  lab: ['Labios|Lips|Lábios', 'inf', 1, 0, {grasa: ['ah'], piel: ['meso']}],
+  peri: ['Líneas peribucales|Perioral lines|Linhas periorais', 'inf', 1, 1, {musculo: ['tox'], piel: ['laser', 'peel', 'ah']}],
+  mar: ['Comisuras y líneas de marioneta|Mouth corners and marionette lines|Comissuras e linhas de marioneta', 'inf', 1, 1, {musculo: ['tox'], grasa: ['ah']}],
+  men: ['Mentón|Chin|Mento', 'inf', 0, 1, {hueso: ['ah', 'bio'], musculo: ['tox']}],
+  man: ['Borde mandibular|Mandibular border|Bordo mandibular', 'inf', 1, 0, {hueso: ['ah', 'bio'], grasa: ['ah'], piel: ['rf', 'hil']}],
+  sub: ['Submentón|Submental area|Região submentoniana', 'cue', 0, 0, {grasa: ['doc'], piel: ['rf']}],
+  cue: ['Cuello|Neck|Pescoço', 'cue', 0, 1, {musculo: ['tox'], piel: ['rf', 'meso']}]
+};
+const ZONA_IDS = Object.keys(ZONAS);
+/* geometría del esquema frontal (viewBox 300 × 360), coherente con PautIA */
+const GEO = {gla: [[150, 128, 15, 15, 0]], nar: [[150, 186, 14, 32, 0]], sng: [[116, 232, 8, 26, 18], [184, 232, 8, 26, -18]], inf: [[108, 176, 24, 11, 0], [192, 176, 24, 11, 0]],
+  sie: [[60, 138, 15, 26, 0], [240, 138, 15, 26, 0]], fre: [[150, 82, 72, 26, 0]], lab: [[150, 262, 30, 11, 0]], man: [[90, 290, 17, 11, 35], [210, 290, 17, 11, -35]],
+  pat: [[82, 156, 11, 13, 0], [218, 156, 11, 13, 0]], mal: [[86, 206, 22, 15, -15], [214, 206, 22, 15, 15]], men: [[150, 304, 24, 15, 0]],
+  peri: [[150, 247, 30, 5, 0]], mar: [[120, 283, 7, 13, 20], [180, 283, 7, 13, -20]], sub: [[150, 326, 28, 6, 0]], cue: [[150, 350, 46, 7, 0]]};
+/* zonas de riesgo por zona y técnica */
+const RIESGO = {
+  'fre|tox': 'Evita el tercio inferior de la frente para no hacer caer la ceja.|Avoid the lower third of the forehead so as not to drop the brow.|Evite o terço inferior da fronte para não fazer descer a sobrancelha.',
+  'gla|tox': 'Quédate por encima del reborde orbitario: la difusión al elevador del párpado causa ptosis.|Stay above the orbital rim: diffusion to the levator causes eyelid ptosis.|Mantenha-se acima do rebordo orbitário: a difusão para o elevador da pálpebra causa ptose.',
+  'pat|tox': 'Lejos del cigomático mayor para no alterar la sonrisa.|Away from the zygomaticus major so as not to alter the smile.|Longe do zigomático maior para não alterar o sorriso.',
+  'peri|tox': 'Dosis bajas: riesgo de incompetencia oral.|Low doses: risk of oral incompetence.|Doses baixas: risco de incompetência oral.',
+  'mar|tox': 'Punto bajo y lateral en el depresor del ángulo de la boca, lejos del depresor del labio inferior.|Low, lateral point in the depressor anguli oris, away from the depressor labii inferioris.|Ponto baixo e lateral no depressor do ângulo da boca, longe do depressor do lábio inferior.',
+  'men|tox': 'Punto bajo y central en el mentoniano.|Low, central point in the mentalis.|Ponto baixo e central no mentoniano.',
+  'cue|tox': 'Inyección superficial en las bandas; dosis altas pueden dar disfagia.|Superficial injection into the bands; high doses can cause dysphagia.|Injeção superficial nas bandas; doses altas podem causar disfagia.',
+  'sie': 'Arteria temporal superficial (rama frontal) y vena temporal media: plano profundo supraperióstico.|Superficial temporal artery (frontal branch) and middle temporal vein: deep supraperiosteal plane.|Artéria temporal superficial (ramo frontal) e veia temporal média: plano profundo supraperiósteo.',
+  'inf': 'Arterias angular e infraorbitaria: cánula, plano profundo y poco volumen; el relleno superficial da efecto Tyndall.|Angular and infraorbital arteries: cannula, deep plane and small volume; superficial filler causes the Tyndall effect.|Artérias angular e infraorbitária: cânula, plano profundo e pouco volume; o preenchimento superficial dá efeito Tyndall.',
+  'mal': 'Agujero infraorbitario y arteria facial transversa: supraperióstico lateral.|Infraorbital foramen and transverse facial artery: lateral supraperiosteal.|Buraco infraorbitário e artéria facial transversa: supraperiósteo lateral.',
+  'sng': 'Arterias facial y angular: riesgo de necrosis del ala nasal y de ceguera.|Facial and angular arteries: risk of alar necrosis and blindness.|Artérias facial e angular: risco de necrose da asa nasal e de cegueira.',
+  'nar': 'Arterias dorsal nasal, angular y columelar: la zona de mayor riesgo de ceguera.|Dorsal nasal, angular and columellar arteries: the area with the highest risk of blindness.|Artérias dorsal nasal, angular e columelar: a zona de maior risco de cegueira.',
+  'lab': 'Arterias labiales superior e inferior, en el plano submucoso y muscular.|Superior and inferior labial arteries, in the submucosal and muscular plane.|Artérias labiais superior e inferior, no plano submucoso e muscular.',
+  'peri': 'Arterias labiales: relleno superficial y en pequeñas cantidades.|Labial arteries: superficial filler in small amounts.|Artérias labiais: preenchimento superficial e em pequenas quantidades.',
+  'mar': 'Arterias facial y labial inferior.|Facial and inferior labial arteries.|Artérias facial e labial inferior.',
+  'men': 'Agujero mentoniano y arteria submentoniana.|Mental foramen and submental artery.|Buraco mentoniano e artéria submentoniana.',
+  'man': 'Arteria facial en la escotadura antegonial.|Facial artery at the antegonial notch.|Artéria facial na chanfradura antegoniana.',
+  'sub|doc': 'Rama marginal mandibular del nervio facial: quédate en el área segura submentoniana.|Marginal mandibular branch of the facial nerve: stay within the safe submental area.|Ramo marginal mandibular do nervo facial: mantenha-se na área segura submentoniana.'
+};
+const riesgoDe = (z, t) => RIESGO[`${z}|${t}`] || ((t === 'ah' || t === 'bio') ? RIESGO[z] : '') || '';
+
+/* escalas */
+const GRAV = ['0 · Sin hallazgo|0 · None|0 · Sem achado', '1 · Leve|1 · Mild|1 · Ligeiro', '2 · Moderado|2 · Moderate|2 · Moderado', '3 · Intenso|3 · Severe|3 · Intenso', '4 · Muy intenso|4 · Very severe|4 · Muito intenso'];
+const FITZ = {1: 'I · Siempre se quema, nunca se broncea|I · Always burns, never tans|I · Queima-se sempre, nunca bronzeia', 2: 'II · Se quema con facilidad, se broncea poco|II · Burns easily, tans minimally|II · Queima-se com facilidade, bronzeia pouco',
+  3: 'III · A veces se quema, se broncea de forma uniforme|III · Sometimes burns, tans uniformly|III · Às vezes queima-se, bronzeia de forma uniforme', 4: 'IV · Rara vez se quema, se broncea bien|IV · Rarely burns, tans well|IV · Raramente se queima, bronzeia bem',
+  5: 'V · Muy rara vez se quema, piel morena|V · Very rarely burns, brown skin|V · Muito raramente se queima, pele morena', 6: 'VI · Nunca se quema, piel muy pigmentada|VI · Never burns, deeply pigmented skin|VI · Nunca se queima, pele muito pigmentada'};
+const GLOGAU = {1: 'I · Sin arrugas: fotoenvejecimiento inicial|I · No wrinkles: early photoageing|I · Sem rugas: fotoenvelhecimento inicial', 2: 'II · Arrugas solo con el gesto|II · Wrinkles in motion only|II · Rugas só com a expressão',
+  3: 'III · Arrugas en reposo|III · Wrinkles at rest|III · Rugas em repouso', 4: 'IV · Solo arrugas: piel muy envejecida|IV · Only wrinkles: severely aged skin|IV · Só rugas: pele muito envelhecida'};
+
+/* ══ PLAN ══ */
+const SOPORTE = ['sie', 'mal', 'men', 'man'];
+const DEPENDE = {sng: ['mal'], inf: ['mal'], mar: ['man', 'men']};       // el surco depende de este soporte
+const FASES = {
+  1: ['Fase 1 · Soporte|Phase 1 · Support|Fase 1 · Suporte', 'Devolver volumen donde la cara lo ha perdido: sienes, pómulos, mentón y mandíbula. Muchas veces los surcos mejoran solo con esto.|Restore volume where the face has lost it: temples, cheekbones, chin and jawline. The folds often improve with this alone.|Devolver volume onde o rosto o perdeu: têmporas, maçãs do rosto, mento e mandíbula. Muitas vezes os sulcos melhoram só com isto.'],
+  2: ['Fase 2 · Gesto y contorno|Phase 2 · Expression and contour|Fase 2 · Expressão e contorno', 'Relajar los músculos que marcan las arrugas de expresión y afinar surcos y labios, si aún hace falta tras la fase 1.|Relax the muscles that cause expression lines and refine folds and lips, if still needed after phase 1.|Relaxar os músculos que marcam as rugas de expressão e afinar sulcos e lábios, se ainda for necessário após a fase 1.'],
+  3: ['Fase 3 · Piel|Phase 3 · Skin|Fase 3 · Pele', 'Mejorar la calidad de la piel: textura, manchas y firmeza.|Improve skin quality: texture, spots and firmness.|Melhorar a qualidade da pele: textura, manchas e firmeza.']
+};
+const UNID0 = {tox: 1, ah: 1, bio: 2, hil: 4, peel: 3, meso: 3, laser: 3, rf: 3, doc: 2};
+const UNIDZ = {'mal|ah': 2, 'sie|ah': 2, 'man|ah': 2};
+const sev = h => Math.max(+(h && h.r) || 0, +(h && h.g) || 0);
+const capasDe = (z, h) => { const ok = Object.keys(ZONAS[z][4]); return (h && h.capas || []).filter(c => ok.includes(c)); };
+/* E = {zonas:{z:{r,g,capas[]}}, piel:{foto,glogau,pig,text,lax}, ficha:{res:{tec:{nivel}}, tdc}, plan:{alt:{}, excl:{}, uds:{}}} */
+function generaPlan(E) {
+  const Z = E.zonas || {}, P = E.piel || {}, F = E.ficha || {}, plan = E.plan || {}, items = [], av = [];
+  const soporteTratado = z => (DEPENDE[z] || []).some(s => sev(Z[s]) >= 2 && capasDe(s, Z[s]).some(c => c === 'grasa' || c === 'hueso'));
+  for (const z of ZONA_IDS) {
+    const h = Z[z]; if (sev(h) < 2) continue;
+    for (const c of capasDe(z, h)) {
+      const alts = ZONAS[z][4][c], key = `${z}|${c}`, tec = alts.includes((plan.alt || {})[key]) ? plan.alt[key] : alts[0];
+      const fase = c === 'piel' ? 3 : (SOPORTE.includes(z) && (c === 'grasa' || c === 'hueso')) ? 1 : 2;
+      const nota = (fase === 2 && DEPENDE[z] && soporteTratado(z)) ? 'tras' : '';
+      const fn = ((F.res || {})[tec] || {}).nivel, prev = items.find(i => i.z === z && i.tec === tec && i.fase === fase);
+      if (prev) { prev.capas.push(c); continue; }
+      items.push({key, z, c, capas: [c], tec, alts, fase, nota, sev: sev(h), riesgo: riesgoDe(z, tec), rv: (tec === 'ah' || tec === 'bio') ? ZONAS[z][2] : 0, ficha: fn,
+        incl: fn === 2 ? false : !(plan.excl || {})[key], uds: num((plan.uds || {})[key]) >= 0 ? num(plan.uds[key]) : (UNIDZ[`${z}|${tec}`] || UNID0[tec])});
+    }
+  }
+  /* piel global */
+  const glob = [['pig', 'laser', 'Manchas y pigmento|Spots and pigment|Manchas e pigmento'], ['text', 'peel', 'Textura y poros|Texture and pores|Textura e poros'], ['lax', 'rf', 'Firmeza|Firmness|Firmeza']];
+  for (const [k, t0, nom] of glob) {
+    if (!(k === 'lax' ? +P.lax >= 2 : P[k])) continue;
+    const key = `piel|${k}`, alts = k === 'pig' ? ['laser', 'peel'] : k === 'text' ? ['peel', 'meso', 'laser'] : ['rf', 'hil'], tec = alts.includes((plan.alt || {})[key]) ? plan.alt[key] : t0, fn = ((F.res || {})[tec] || {}).nivel;
+    items.push({key, z: 'piel', nom, c: 'piel', capas: ['piel'], tec, alts, fase: 3, nota: '', sev: 0, riesgo: '', rv: 0, ficha: fn, incl: fn === 2 ? false : !(plan.excl || {})[key], uds: num((plan.uds || {})[key]) >= 0 ? num(plan.uds[key]) : UNID0[tec]});
+  }
+  items.sort((a, b) => a.fase - b.fase || ZONA_IDS.indexOf(a.z) - ZONA_IDS.indexOf(b.z));
+  /* avisos */
+  if (F.tdc === 'alta') av.push([2, 'Cribado de trastorno dismórfico corporal positivo en AnamnesIA: no propongas un plan; valora derivar a salud mental.|Positive body dysmorphic disorder screening in AnamnesIA: do not propose a plan; consider referral to mental health.|Rastreio de perturbação dismórfica corporal positivo no AnamnesIA: não proponha um plano; pondere encaminhar para saúde mental.']);
+  for (const z of Object.keys(DEPENDE)) {
+    if (sev(Z[z]) < 2) continue;
+    if (soporteTratado(z)) av.push([1, T3f('{0}: trata primero el soporte ({1}) y reevalúa a las 4 semanas antes de rellenar el surco.|{0}: treat the support first ({1}) and reassess at 4 weeks before filling the fold.|{0}: trate primeiro o suporte ({1}) e reavalie às 4 semanas antes de preencher o sulco.', T3(ZONAS[z][0]), DEPENDE[z].map(s => T3(ZONAS[s][0])).join(', '))]);
+    else if (DEPENDE[z].every(s => !Z[s] || Z[s].r === undefined && Z[s].g === undefined)) av.push([1, T3f('{0}: explora antes {1}. Un surco marcado suele deberse a la pérdida de soporte, no al surco.|{0}: examine {1} first. A deep fold is often due to loss of support, not to the fold itself.|{0}: explore antes {1}. Um sulco marcado costuma dever-se à perda de suporte, não ao sulco.', T3(ZONAS[z][0]), DEPENDE[z].map(s => T3(ZONAS[s][0])).join(', '))]);
+  }
+  if (+P.foto >= 4 && items.some(i => i.incl && (i.tec === 'laser' || i.tec === 'peel'))) av.push([1, 'Fototipo IV a VI con láser o peeling: riesgo de hiperpigmentación postinflamatoria; prepara la piel y elige parámetros y agentes suaves.|Phototype IV to VI with laser or peel: risk of post-inflammatory hyperpigmentation; prime the skin and choose gentle settings and agents.|Fototipo IV a VI com laser ou peeling: risco de hiperpigmentação pós-inflamatória; prepare a pele e escolha parâmetros e agentes suaves.']);
+  if (+P.lax >= 3 || +P.glogau === 4) av.push([1, 'Laxitud importante: los tratamientos médicos tienen un límite. Explícalo y valora la consulta con cirugía plástica.|Marked laxity: medical treatments have a limit. Explain this and consider a plastic surgery consultation.|Laxidão importante: os tratamentos médicos têm um limite. Explique-o e pondere a consulta com cirurgia plástica.']);
+  for (const i of items) if (i.ficha === 2) av.push([2, T3f('AnamnesIA desaconseja {0}: lo he quitado del plan.|AnamnesIA advises against {0}: I have removed it from the plan.|O AnamnesIA desaconselha {0}: retirei-o do plano.', T3(TEC[i.tec][0]))]);
+  const vistos = new Set(), avU = av.filter(([, t]) => !vistos.has(t) && vistos.add(t));
+  return {items, avisos: avU};
+}
+function presupuesto(items, precios = {}) {
+  const fases = {1: 0, 2: 0, 3: 0}; let falta = 0;
+  for (const i of items) { if (!i.incl) continue; const p = num(precios[i.tec]); if (!(p >= 0)) { falta++; continue; } fases[i.fase] += p * i.uds; }
+  return {fases, total: fases[1] + fases[2] + fases[3], falta};
+}
+const eur = (x, l = 'es') => new Intl.NumberFormat({es: 'es-ES', en: 'en-GB', pt: 'pt-PT'}[l] || 'es-ES', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0}).format(x);
+
+/* ficha de AnamnesIA */
+function leeFicha(o) {
+  if (!o || typeof o !== 'object' || o.formato !== 'kitesteticia-paciente/1') throw new Error(T3('El fichero no es una ficha de AnamnesIA (formato kitesteticia-paciente/1).|The file is not an AnamnesIA file (format kitesteticia-paciente/1).|O ficheiro não é uma ficha do AnamnesIA (formato kitesteticia-paciente/1).'));
+  const p = o.paciente || {}, res = {};
+  for (const [t, r] of Object.entries(o.resultado || {})) if (TEC[t]) res[t] = {nivel: +r.nivel || 0};
+  return {id: String(p.id || ''), edad: p.edad ?? '', foto: p.foto ? String(p.foto) : '', tdc: o.cribadoTDC || '', expec: o.expectativas || '', res};
+}
+
+/* ══ DOCUMENTOS ══ */
+const nomZ = (i, X) => i.z === 'piel' ? X(i.nom) : X(ZONAS[i.z][0]);
+function planPacienteMd(E, l) {
+  const X = s => Tl(s, l), fx = (s, ...a) => X(s).replace(/\{(\d)\}/g, (_, i) => a[+i]), {items} = generaPlan(E), inc = items.filter(i => i.incl), pr = presupuesto(inc, E.precios), P = E.paciente || {};
+  let md = `**${X('Paciente|Patient|Doente')}:** ${P.id || '—'} · **${X('Fecha|Date|Data')}:** ${P.fecha || ''}\n\n`;
+  if (P.motivo) md += `**${X('Lo que te preocupa|What concerns you|O que a preocupa')}:** ${P.motivo}\n\n`;
+  md += X('Tu cara no se trata arruga a arruga, sino por capas: primero el soporte, después el gesto y los contornos, y por último la piel. Así el resultado es más natural y se necesita menos producto.|Your face is not treated wrinkle by wrinkle, but layer by layer: first the support, then expression and contours, and finally the skin. This gives a more natural result and needs less product.|O seu rosto não é tratado ruga a ruga, mas por camadas: primeiro o suporte, depois a expressão e os contornos e, por fim, a pele. Assim o resultado é mais natural e é necessário menos produto.') + '\n';
+  for (const f of [1, 2, 3]) {
+    const it = inc.filter(i => i.fase === f); if (!it.length) continue;
+    md += `\n## ${X(FASES[f][0])}\n${X(FASES[f][1])}\n\n` + it.map(i => `- **${nomZ(i, X)}:** ${X(TEC[i.tec][0])} · ${i.uds} ${X(TEC[i.tec][i.uds === 1 ? 1 : 2])}${i.nota ? ' ' + X('(tras revisar el resultado de la fase 1)|(after reviewing the result of phase 1)|(após rever o resultado da fase 1)') : ''}`).join('\n') + '\n';
+    if (pr.fases[f]) md += `\n${X('Presupuesto de esta fase|Estimate for this phase|Orçamento desta fase')}: **${eur(pr.fases[f], l)}**\n`;
+  }
+  if (!inc.length) md += `\n${X('No hay tratamientos propuestos.|No treatments proposed.|Não há tratamentos propostos.')}\n`;
+  md += `\n## ${X('Cuándo|When|Quando')}\n- ${X('La fase 2 empieza unas 4 semanas después de la fase 1, cuando se ve su resultado.|Phase 2 starts about 4 weeks after phase 1, once its result can be seen.|A fase 2 começa cerca de 4 semanas depois da fase 1, quando se vê o seu resultado.')}\n- ${X('La fase 3 se programa entre las sesiones anteriores.|Phase 3 is scheduled between the previous sessions.|A fase 3 é programada entre as sessões anteriores.')}\n`;
+  md += `\n## ${X('Para mantenerlo|To maintain it|Para o manter')}\n- ${X('Fotoprotección todos los días.|Sun protection every day.|Proteção solar todos os dias.')}\n- ${X('Cuidado de la piel en casa, según te indiquemos.|Skin care at home, as we advise.|Cuidado da pele em casa, como indicarmos.')}\n- ${X('Una revisión al terminar cada fase.|A check-up at the end of each phase.|Uma revisão no final de cada fase.')}\n`;
+  if (pr.total) md += `\n## ${X('Presupuesto total|Total estimate|Orçamento total')}\n**${eur(pr.total, l)}**. ${X('Es orientativo: puede cambiar si cambia el plan tras cada revisión.|It is indicative: it may change if the plan changes after each check-up.|É indicativo: pode mudar se o plano mudar após cada revisão.')}\n`;
+  md += `\n${X('Antes de cada tratamiento recibirás información por escrito y firmarás un consentimiento específico. Puedes cambiar de opinión en cualquier momento.|Before each treatment you will receive written information and sign a specific consent. You can change your mind at any time.|Antes de cada tratamento receberá informação por escrito e assinará um consentimento específico. Pode mudar de ideias a qualquer momento.')}\n`;
+  return md;
+}
+function informeMedicoMd(E) {
+  const {items, avisos} = generaPlan(E), P = E.piel || {}, Z = E.zonas || {}, Pa = E.paciente || {};
+  let md = `**${T3('Paciente|Patient|Doente')}:** ${Pa.id || '—'} · **${T3('Fecha|Date|Data')}:** ${Pa.fecha || ''}${Pa.motivo ? ` · **${T3('Motivo|Concern|Motivo')}:** ${Pa.motivo}` : ''}\n\n`;
+  md += `## ${T3('Piel|Skin|Pele')}\n- Fitzpatrick: ${P.foto ? T3(FITZ[P.foto]) : '—'}\n- Glogau: ${P.glogau ? T3(GLOGAU[P.glogau]) : '—'}\n- ${T3('Laxitud|Laxity|Laxidão')}: ${P.lax !== undefined && P.lax !== '' ? T3(GRAV[+P.lax]) : '—'}${P.pig ? ' · ' + T3('manchas|spots|manchas') : ''}${P.text ? ' · ' + T3('textura|texture|textura') : ''}\n`;
+  for (const [t, tn] of Object.entries(TERCIOS)) {
+    const zs = ZONA_IDS.filter(z => ZONAS[z][1] === t && Z[z] && (Z[z].r !== undefined || Z[z].g !== undefined)); if (!zs.length) continue;
+    md += `\n## ${T3(tn)}\n` + zs.map(z => { const h = Z[z], c = capasDe(z, h); return `- **${T3(ZONAS[z][0])}:** ${T3('reposo|rest|repouso')} ${h.r ?? '—'}${ZONAS[z][3] ? ` · ${T3('gesto|animation|expressão')} ${h.g ?? '—'}` : ''}${c.length ? ` · ${c.map(x => T3(CAPAS[x])).join(', ')}` : ''}`; }).join('\n') + '\n';
+  }
+  md += `\n## ${T3('Plan|Plan|Plano')}\n` + (items.length ? items.map(i => `- ${T3(FASES[i.fase][0]).split('·')[0].trim()} · **${nomZ(i, T3)}** (${i.capas.map(c => T3(CAPAS[c])).join(', ')}): ${T3(TEC[i.tec][0])} × ${i.uds}${i.incl ? '' : ' — ' + T3('no incluido|not included|não incluído')}${i.nota ? ' — ' + T3('tras reevaluar el soporte|after reassessing support|após reavaliar o suporte') : ''}${i.ficha === 1 ? ' — ' + T3('precaución según AnamnesIA|caution per AnamnesIA|precaução segundo o AnamnesIA') : ''}`).join('\n') : '- —') + '\n';
+  const rz = items.filter(i => i.incl && i.riesgo); if (rz.length) md += `\n## ${T3('Zonas de riesgo|Danger zones|Zonas de risco')}\n` + rz.map(i => `- **${T3(ZONAS[i.z][0])} · ${T3(TEC[i.tec][0])}:** ${T3(i.riesgo)}`).join('\n') + '\n';
+  if (avisos.length) md += `\n## ${T3('Avisos|Warnings|Avisos')}\n` + avisos.map(a => `- ${T3(a[1])}`).join('\n') + '\n';
+  md += `\n## ${T3('Referencias|References|Referências')}\n` + FUENTES.map(f => `- ${f}`).join('\n') + '\n';
+  return md;
+}
+if (typeof module !== 'undefined') module.exports = {T3, Tl, num, FUENTES, TEC, CAPAS, TERCIOS, ZONAS, ZONA_IDS, GEO, RIESGO, riesgoDe, GRAV, FITZ, GLOGAU, SOPORTE, DEPENDE, FASES, sev, capasDe, generaPlan, presupuesto, eur, leeFicha, planPacienteMd, informeMedicoMd};
+
+/* ══ ValorIA · interfaz. Lógica en nucleo.js. Sin IA y sin red. ══ */
+const STEPS = ['Inicio', 'Paciente', 'Exploración', 'Plan', 'Documentos'];
+const NAV = [['Empezar una valoración', 'Prueba el ejemplo: una paciente con pérdida de soporte en el tercio medio.'], ['Siguiente: exploración', 'Si tienes la ficha de AnamnesIA, cárgala: trae el fototipo y las contraindicaciones.'], ['Siguiente: plan', 'Solo entran en el plan las zonas de 2 o más con una capa marcada.'], ['Siguiente: documentos', 'Lo que no incluyas no sale en el plan de la paciente.'], ['Volver al inicio', 'El informe lleva las zonas de riesgo; el plan de la paciente, no.']];
+const RENDER = {0: pintaInicio, 1: pintaPac, 2: pintaExp, 3: pintaPlan, 4: pintaDoc};
+const GLOS = [
+  ['¿Qué es ValorIA?', 'La segunda app del Kit EstéticIA: convierte la exploración facial por tercios y por capas en un plan por fases que la paciente entiende.'],
+  ['Por capas', 'Piel, grasa, músculo y hueso. El envejecimiento afecta a todas: el hueso se reabsorbe, los compartimentos grasos pierden volumen y descienden, el músculo marca el gesto y la piel pierde calidad.'],
+  ['Soporte antes que surco', 'Si el surco nasogeniano, la ojera o las líneas de marioneta dependen de la pérdida de soporte del pómulo o de la mandíbula, el plan trata primero el soporte y reevalúa el surco a las 4 semanas.'],
+  ['Escalas', 'Fitzpatrick (fototipo, respuesta al sol), Glogau (grado de fotoenvejecimiento) y una gravedad de 0 a 4 por zona, en reposo y con el gesto, como las escalas validadas de la serie Merz.'],
+  ['Zonas de riesgo', 'Para cada técnica propuesta, el informe recoge las arterias o estructuras que hay que respetar en esa zona. La nariz, la glabela y el surco nasogeniano son las de mayor riesgo de complicación vascular grave.'],
+  ['Límites', 'La app ordena y propone; no sustituye tu juicio clínico, las fichas técnicas ni la formación práctica en anatomía.']
+];
+const E0 = () => ({pac: {id: '', fecha: new Date().toISOString().slice(0, 10), motivo: ''}, piel: {foto: '', glogau: '', lax: '', pig: false, text: false}, zonas: {}, ficha: null, plan: {alt: {}, excl: {}, uds: {}}});
+let S = {...E0(), precios: {}, docLang: '', esEjemplo: false};
+const E = () => ({zonas: S.zonas, piel: S.piel, ficha: S.ficha || {}, plan: S.plan, precios: S.precios, paciente: S.pac});
+const cambio = () => { S.esEjemplo = false; guarda(); };
+const sel = (id, val, opts, lab, extra = '') => `<div class="field"><label for="${id}">${esc(T3(lab))}</label><select id="${id}" ${extra}><option value="">—</option>${opts.map(([v, t]) => `<option value="${v}" ${String(val) === String(v) ? 'selected' : ''}>${esc(T3(t))}</option>`).join('')}</select></div>`;
+function mdHtml(md) { const inl = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); return md.split('\n').map(l => /^## /.test(l) ? `<h3>${inl(l.slice(3))}</h3>` : /^- /.test(l) ? `<p class="dz-li">${inl(l.slice(2))}</p>` : l.trim() ? `<p>${inl(l)}</p>` : '').join(''); }
+
+/* ── 0 · inicio ── */
+function pintaInicio() { const n = Object.keys(S.zonas).length; $('inicioProj').innerHTML = (n || S.pac.id) ? `${esc(T3f('Valoración en curso: {0} · {1} zona(s) exploradas.|Assessment in progress: {0} · {1} area(s) examined.|Avaliação em curso: {0} · {1} zona(s) exploradas.', S.pac.id || '—', n))} <button class="btn btn-ghost btn-sm" id="btnCont" type="button">${esc(T3('Continuar|Continue|Continuar'))}</button>` : ''; }
+$('btnStart').onclick = () => { if (S.esEjemplo) { Object.assign(S, E0()); S.esEjemplo = false; guarda(); } go(1); };
+$('btnEjemplo').onclick = () => { aplicaEjemplo(); guarda(); go(2); toast(T3('Ejemplo de demostración|Demonstration example|Exemplo de demonstração')); };
+document.addEventListener('click', e => { if (e.target.closest('#btnCont')) go(1); });
+
+/* ── 1 · paciente y piel ── */
+function pintaPac() {
+  const p = S.pac, k = S.piel, F = S.ficha;
+  $('pacBox').innerHTML = `<div class="card"><div class="dz-f2"><div class="field"><label for="v_id">${esc(T3('Identificador de la paciente|Patient identifier|Identificador da doente'))}</label><input id="v_id" data-p="id" type="text" value="${esc(p.id)}" autocomplete="off"></div><div class="field"><label for="v_fecha">${esc(T3('Fecha|Date|Data'))}</label><input id="v_fecha" data-p="fecha" type="date" value="${esc(p.fecha)}"></div></div>
+      <div class="field"><label for="v_motivo">${esc(T3('Lo que le preocupa, en sus palabras|What concerns her, in her own words|O que a preocupa, nas suas palavras'))}</label><input id="v_motivo" data-p="motivo" type="text" value="${esc(p.motivo)}" autocomplete="off"></div>
+      <div class="field"><label for="v_ficha">${esc(T3('Ficha de AnamnesIA (opcional)|AnamnesIA file (optional)|Ficha do AnamnesIA (opcional)'))}</label><input id="v_ficha" type="file" accept=".json,application/json"></div>
+      ${F ? `<div class="aviso v-ficha"><span class="fa-chip ok">AnamnesIA</span> ${esc(T3f('Ficha cargada: {0}. Fototipo {1}. Técnicas desaconsejadas: {2}. En precaución: {3}.|File loaded: {0}. Phototype {1}. Techniques advised against: {2}. With caution: {3}.|Ficha carregada: {0}. Fototipo {1}. Técnicas desaconselhadas: {2}. Com precaução: {3}.', F.id || '—', F.foto || '—', lista(F, 2), lista(F, 1)))}${F.expec ? `<br>${esc(T3('Expectativas|Expectations|Expectativas'))}: «${esc(F.expec)}»` : ''} <button class="btn btn-ghost btn-sm" id="v_quita" type="button">${esc(T3('Quitar la ficha|Remove the file|Retirar a ficha'))}</button></div>` : ''}</div>
+    <div class="card"><h3>${esc(T3('Piel|Skin|Pele'))}</h3><div class="dz-f2">${sel('v_foto', k.foto, Object.entries(FITZ), 'Fototipo de Fitzpatrick|Fitzpatrick phototype|Fototipo de Fitzpatrick', 'data-k="foto"')}${sel('v_glogau', k.glogau, Object.entries(GLOGAU), 'Fotoenvejecimiento de Glogau|Glogau photoageing|Fotoenvelhecimento de Glogau', 'data-k="glogau"')}</div>
+      <div class="dz-f2">${sel('v_lax', k.lax, GRAV.map((g, i) => [i, g]), 'Laxitud cutánea|Skin laxity|Laxidão cutânea', 'data-k="lax"')}<fieldset class="dz-fs"><legend>${esc(T3('Calidad de la piel|Skin quality|Qualidade da pele'))}</legend><label class="fa-chk"><input type="checkbox" data-k="pig" ${k.pig ? 'checked' : ''}> <span>${esc(T3('Manchas o pigmento irregular|Spots or uneven pigment|Manchas ou pigmento irregular'))}</span></label><label class="fa-chk"><input type="checkbox" data-k="text" ${k.text ? 'checked' : ''}> <span>${esc(T3('Textura, poros o cicatrices|Texture, pores or scars|Textura, poros ou cicatrizes'))}</span></label></fieldset></div></div>`;
+  $$('[data-p]').forEach(x => x.addEventListener(x.type === 'date' ? 'change' : 'input', () => { p[x.dataset.p] = x.value; cambio(); }));
+  $$('[data-k]').forEach(x => x.onchange = () => { k[x.dataset.k] = x.type === 'checkbox' ? x.checked : x.value; cambio(); });
+  $('v_ficha').onchange = async e => { const fl = e.target.files[0]; if (!fl) return; try { const f = leeFicha(JSON.parse(await fl.text())); S.ficha = f; if (f.id) p.id = f.id; if (f.foto) k.foto = f.foto; cambio(); pintaPac(); toast(T3('Ficha de AnamnesIA cargada|AnamnesIA file loaded|Ficha do AnamnesIA carregada')); } catch (err) { toast(err.message, 7000); } };
+  if ($('v_quita')) $('v_quita').onclick = () => { S.ficha = null; cambio(); pintaPac(); };
+}
+const lista = (F, n) => Object.entries(F.res || {}).filter(([, r]) => r.nivel === n).map(([t]) => T3(TEC[t][0])).join(', ') || '—';
+
+/* ── 2 · exploración ── */
+function caraSVG() {
+  const zs = Object.entries(GEO).map(([z, es]) => { const h = S.zonas[z], s = h && (h.r !== undefined || h.g !== undefined) ? sev(h) : -1; return es.map(([cx, cy, rx, ry, g]) => `<ellipse class="v-z v-s${s}" data-z="${z}" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${g} ${cx} ${cy})"><title>${esc(T3(ZONAS[z][0]))}</title></ellipse>`).join(''); }).join('');
+  return `<svg class="v-cara" viewBox="0 0 300 360" role="img" aria-label="${esc(T3('Esquema frontal de la cara coloreado por gravedad; toca una zona para ir a ella. La lista tiene todas las zonas.|Frontal face diagram coloured by severity; tap an area to go to it. The list has every area.|Esquema frontal do rosto colorido por gravidade; toque numa zona para ir até ela. A lista tem todas as zonas.'))}">
+    <ellipse cx="150" cy="185" rx="108" ry="150" fill="#FBEDE6" stroke="#D9A27E" stroke-width="2"/><path d="M110 330 q40 30 80 0 v30 h-80z" fill="#FBEDE6" stroke="#D9A27E" stroke-width="2"/>
+    <path d="M92 150 q16 -10 32 0 q-16 10 -32 0 M176 150 q16 -10 32 0 q-16 10 -32 0" fill="#fff" stroke="#0F2237" stroke-width="1.5"/><circle cx="108" cy="150" r="4" fill="#0F2237"/><circle cx="192" cy="150" r="4" fill="#0F2237"/>
+    <path d="M86 128 q22 -12 44 -2 M170 126 q22 -10 44 2" fill="none" stroke="#6B3E1D" stroke-width="3" stroke-linecap="round"/>
+    <path d="M150 156 v52 q-10 8 -14 4 M150 208 q10 8 14 4" fill="none" stroke="#C28A6A" stroke-width="1.5"/><path d="M124 262 q26 -10 52 0 q-26 14 -52 0" fill="#E9A3A0" stroke="#B85C5C" stroke-width="1"/>${zs}</svg>`;
+}
+function leyenda() { return `<p class="v-ley">${[-1, 0, 1, 2, 3, 4].map(s => `<span><i class="v-sw v-s${s}"></i>${esc(s < 0 ? T3('sin explorar|not examined|não explorada') : T3(GRAV[s]))}</span>`).join('')}</p>`; }
+function pintaExp() {
+  const opts = GRAV.map((g, i) => `<option value="${i}">${esc(T3(g))}</option>`).join('');
+  $('expBox').innerHTML = `<div class="v-exp"><div class="card v-mapa"><div id="vCara">${caraSVG()}</div>${leyenda()}</div><div>${Object.entries(TERCIOS).map(([t, tn]) => `<div class="card"><h3>${esc(T3(tn))}</h3>${ZONA_IDS.filter(z => ZONAS[z][1] === t).map(z => { const h = S.zonas[z] || {}, Z = ZONAS[z]; return `<fieldset class="v-zona" id="vz_${z}"><legend>${esc(T3(Z[0]))}${Z[2] === 2 ? ` <span class="fa-chip error">${esc(T3('riesgo vascular alto|high vascular risk|risco vascular alto'))}</span>` : ''}</legend>
+        <div class="v-sc"><div class="field"><label for="r_${z}">${esc(T3('Reposo|Rest|Repouso'))}</label><select id="r_${z}" data-zr="${z}"><option value="">—</option>${opts}</select></div>${Z[3] ? `<div class="field"><label for="g_${z}">${esc(T3('Gesto|Animation|Expressão'))}</label><select id="g_${z}" data-zg="${z}"><option value="">—</option>${opts}</select></div>` : ''}</div>
+        <div class="v-capas" role="group" aria-label="${esc(T3f('Capas que lo causan en {0}|Layers causing it in {0}|Camadas que o causam em {0}', T3(Z[0])))}">${Object.keys(Z[4]).map(c => `<label class="fa-chk"><input type="checkbox" data-zc="${z}" value="${c}" ${(h.capas || []).includes(c) ? 'checked' : ''}> <span>${esc(T3(CAPAS[c]))}</span></label>`).join('')}</div></fieldset>`; }).join('')}</div>`).join('')}</div></div>`;
+  for (const z of ZONA_IDS) { const h = S.zonas[z] || {}; $('r_' + z).value = h.r ?? ''; if ($('g_' + z)) $('g_' + z).value = h.g ?? ''; }
+  const zona = z => (S.zonas[z] = S.zonas[z] || {capas: []});
+  const fin = z => { const h = S.zonas[z]; if (h && h.r === undefined && h.g === undefined && !(h.capas || []).length) delete S.zonas[z]; cambio(); $('vCara').innerHTML = caraSVG(); };
+  $$('[data-zr],[data-zg]').forEach(x => x.onchange = () => { const z = x.dataset.zr || x.dataset.zg, k = x.dataset.zr ? 'r' : 'g', h = zona(z); if (x.value === '') delete h[k]; else h[k] = +x.value; fin(z); });
+  $$('[data-zc]').forEach(x => x.onchange = () => { const h = zona(x.dataset.zc); h.capas = (h.capas || []).filter(c => c !== x.value).concat(x.checked ? [x.value] : []); fin(x.dataset.zc); });
+  $('vCara').onclick = e => { const el = e.target.closest('[data-z]'); if (!el) return; const f = $('vz_' + el.dataset.z); f.scrollIntoView({behavior: 'smooth', block: 'center'}); $('r_' + el.dataset.z).focus({preventScroll: true}); };
+}
+
+/* ── 3 · plan ── */
+function pintaPlan() {
+  const {items, avisos} = generaPlan(E()), pr = presupuesto(items, S.precios), usadas = [...new Set(items.map(i => i.tec))];
+  const fila = i => `<li class="v-it${i.incl ? '' : ' v-off'}"><div class="v-ith"><label class="fa-chk"><input type="checkbox" data-in="${i.key}" ${i.incl ? 'checked' : ''} ${i.ficha === 2 ? 'disabled' : ''}> <b>${esc(i.z === 'piel' ? T3(i.nom) : T3(ZONAS[i.z][0]))}</b></label><span class="fa-chip">${esc(i.capas.map(c => T3(CAPAS[c])).join(' + '))}</span>${i.sev ? `<span class="fa-chip">${esc(T3('gravedad|severity|gravidade'))} ${i.sev}</span>` : ''}${i.ficha === 2 ? `<span class="fa-chip error">${esc(T3('AnamnesIA: no tratar|AnamnesIA: do not treat|AnamnesIA: não tratar'))}</span>` : i.ficha === 1 ? `<span class="fa-chip aviso">${esc(T3('AnamnesIA: precaución|AnamnesIA: caution|AnamnesIA: precaução'))}</span>` : ''}${i.nota ? `<span class="fa-chip aviso">${esc(T3('tras reevaluar el soporte|after reassessing support|após reavaliar o suporte'))}</span>` : ''}</div>
+      <div class="v-itc"><div class="field"><label for="t_${i.key}">${esc(T3('Técnica|Technique|Técnica'))}</label><select id="t_${i.key}" data-tec="${i.key}">${i.alts.map(t => `<option value="${t}" ${t === i.tec ? 'selected' : ''}>${esc(T3(TEC[t][0]))}</option>`).join('')}</select></div><div class="field"><label for="u_${i.key}">${esc(T3f('Cantidad ({0})|Quantity ({0})|Quantidade ({0})', T3(TEC[i.tec][2])))}</label><input id="u_${i.key}" data-ud="${i.key}" type="number" min="0" step="0.5" value="${i.uds}"></div></div>
+      ${i.riesgo ? `<p class="v-rz">${ico('alerta')}<span>${esc(T3(i.riesgo))}</span></p>` : ''}</li>`;
+  $('planBox').innerHTML = `${avisos.length ? `<div class="card">${avisos.map(([s, tx]) => `<div class="aviso ${s === 2 ? 'dz-err' : ''}"><span class="fa-chip ${s === 2 ? 'error' : 'aviso'}">${esc(T3(s === 2 ? 'Importante|Important|Importante' : 'Ojo|Note|Atenção'))}</span> ${esc(T3(tx))}</div>`).join('')}</div>` : ''}
+    ${items.length ? [1, 2, 3].map(f => { const it = items.filter(i => i.fase === f); return it.length ? `<div class="card v-fase v-f${f}"><h3>${esc(T3(FASES[f][0]))}</h3><p class="help">${esc(T3(FASES[f][1]))}</p><ul class="v-its">${it.map(fila).join('')}</ul></div>` : ''; }).join('') : `<div class="card"><p class="empty">${esc(T3('Aún no hay propuestas: puntúa alguna zona con 2 o más y marca la capa que lo causa, o señala la calidad de la piel.|No proposals yet: score an area 2 or more and tick the layer causing it, or record skin quality.|Ainda não há propostas: pontue alguma zona com 2 ou mais e assinale a camada que o causa, ou indique a qualidade da pele.'))}</p></div>`}
+    ${usadas.length ? `<div class="card"><h3>${esc(T3('Tus precios|Your prices|Os seus preços'))}</h3><div class="v-prec">${usadas.map(t => `<div class="field"><label for="pr_${t}">${esc(T3f('{0}, por {1} (€)|{0}, per {1} (€)|{0}, por {1} (€)', T3(TEC[t][0]), T3(TEC[t][1])))}</label><input id="pr_${t}" data-pr="${t}" type="number" min="0" step="10" value="${esc(S.precios[t] ?? '')}"></div>`).join('')}</div>
+      <div class="v-tot" aria-live="polite" id="vTot"></div><p class="help">${esc(T3('Los precios se guardan en este navegador para las siguientes valoraciones.|Prices are stored in this browser for future assessments.|Os preços ficam guardados neste navegador para as próximas avaliações.'))}</p></div>` : ''}`;
+  pintaTot();
+  $$('[data-in]').forEach(x => x.onchange = () => { S.plan.excl[x.dataset.in] = !x.checked; cambio(); x.closest('.v-it').classList.toggle('v-off', !x.checked); pintaTot(); });
+  $$('[data-tec]').forEach(x => x.onchange = () => { S.plan.alt[x.dataset.tec] = x.value; delete S.plan.uds[x.dataset.tec]; cambio(); const y = scrollY; pintaPlan(); scrollTo(0, y); $('t_' + x.dataset.tec).focus(); });
+  $$('[data-ud]').forEach(x => x.oninput = () => { if (x.value === '') delete S.plan.uds[x.dataset.ud]; else S.plan.uds[x.dataset.ud] = x.value; cambio(); pintaTot(); });
+  $$('[data-pr]').forEach(x => x.oninput = () => { if (x.value === '') delete S.precios[x.dataset.pr]; else S.precios[x.dataset.pr] = x.value; cambio(); pintaTot(); });
+}
+function pintaTot() { if (!$('vTot')) return; const {items} = generaPlan(E()), p = presupuesto(items, S.precios); $('vTot').innerHTML = `${[1, 2, 3].map(f => p.fases[f] ? `<span>${esc(T3(FASES[f][0]).split('·')[0].trim())}: <b>${esc(eur(p.fases[f], LANG))}</b></span>` : '').join('')}<span class="v-tt">${esc(T3('Total|Total|Total'))}: <b>${esc(eur(p.total, LANG))}</b></span>${p.falta ? `<span class="v-fal">${esc(T3f('{0} propuesta(s) sin precio|{0} proposal(s) without a price|{0} proposta(s) sem preço', p.falta))}</span>` : ''}`; }
+
+/* ── 4 · documentos ── */
+function pintaDoc() {
+  const l = S.docLang || LANG;
+  $('docBox').innerHTML = `<div class="card"><div class="dz-f2"><div class="field"><label for="d_lang">${esc(T3('Idioma del plan para la paciente|Language of the patient plan|Idioma do plano para a doente'))}</label><select id="d_lang">${[['es', 'Español'], ['en', 'English'], ['pt', 'Português']].map(([v, n]) => `<option value="${v}" ${l === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
+      <div class="dz-tabs" role="group" aria-label="${esc(T3('Documento|Document|Documento'))}"><button class="btn btn-ghost btn-sm" type="button" data-vd="pac" aria-pressed="${(S.vd || 'pac') === 'pac'}">${esc(T3('Plan para la paciente|Patient plan|Plano para a doente'))}</button><button class="btn btn-ghost btn-sm" type="button" data-vd="med" aria-pressed="${S.vd === 'med'}">${esc(T3('Informe de valoración|Assessment report|Relatório de avaliação'))}</button></div></div>
+    <div class="card v-doc dz-doc" id="vDoc"></div>
+    <div class="card"><div class="actions"><button class="btn btn-word" id="dWordP" type="button">${ico('doc')}<span>${esc(T3('Word del plan para la paciente|Patient plan Word file|Word do plano para a doente'))}</span></button><button class="btn btn-word" id="dWordM" type="button">${ico('doc')}<span>${esc(T3('Word del informe|Report Word file|Word do relatório'))}</span></button><button class="btn btn-ghost" id="dPrint" type="button">${ico('print')}<span>${esc(T3('Imprimir|Print|Imprimir'))}</span></button></div></div>`;
+  const vista = () => { const pac = (S.vd || 'pac') === 'pac'; $('vDoc').innerHTML = `<h2>${esc(pac ? Tl('Tu plan por fases|Your phased plan|O seu plano por fases', l) : T3('Informe de valoración facial|Facial assessment report|Relatório de avaliação facial'))}</h2>` + mdHtml(pac ? planPacienteMd(E(), l) : informeMedicoMd(E())); };
+  vista();
+  $('d_lang').onchange = () => { S.docLang = $('d_lang').value; cambio(); pintaDoc(); };
+  $$('[data-vd]').forEach(b => b.onclick = () => { S.vd = b.dataset.vd; guarda(); $$('[data-vd]').forEach(x => x.setAttribute('aria-pressed', x === b)); vista(); });
+  $('dPrint').onclick = () => window.print();
+  const nombre = k => `${k}_${(S.pac.id || 'paciente').replace(/[^\w-]+/g, '_')}_${S.pac.fecha}.docx`;
+  $('dWordP').onclick = async () => { try { dl(nombre('plan'), await wordDeMarkdown(planPacienteMd(E(), l), {titulo: Tl('Tu plan por fases|Your phased plan|O seu plano por fases', l), subtitulo: S.pac.id || '', pie: Tl('Plan orientativo preparado por tu médico con ValorIA (Kit EstéticIA).|Indicative plan prepared by your doctor with ValorIA (EstéticIA Kit).|Plano indicativo preparado pelo seu médico com o ValorIA (Kit EstéticIA).', l)})); } catch (e) { toast(e.message, 7000); } };
+  $('dWordM').onclick = async () => { try { dl(nombre('valoracion'), await wordDeMarkdown(informeMedicoMd(E()), {titulo: T3('Informe de valoración facial|Facial assessment report|Relatório de avaliação facial'), subtitulo: S.pac.id || '', pie: T3('Generado con ValorIA (Kit EstéticIA). Herramienta de apoyo: la indicación es del médico.|Generated with ValorIA (EstéticIA Kit). Support tool: the indication is the doctor\'s.|Gerado com o ValorIA (Kit EstéticIA). Ferramenta de apoio: a indicação é do médico.')})); } catch (e) { toast(e.message, 7000); } };
+}
+
+/* ── ejemplo ── */
+function aplicaEjemplo() {
+  Object.assign(S, E0());
+  S.pac = {id: 'EJ-12', fecha: new Date().toISOString().slice(0, 10), motivo: T3('«Me veo la cara cansada y los surcos muy marcados»|«My face looks tired and the folds are very deep»|«Vejo o rosto cansado e os sulcos muito marcados»')};
+  S.piel = {foto: '3', glogau: '3', lax: '2', pig: true, text: false};
+  S.zonas = {fre: {r: 1, g: 3, capas: ['musculo']}, gla: {r: 2, g: 3, capas: ['musculo']}, pat: {r: 1, g: 2, capas: ['musculo']}, sie: {r: 2, capas: ['grasa']}, mal: {r: 3, capas: ['grasa', 'hueso']}, inf: {r: 2, capas: ['grasa']}, sng: {r: 3, capas: ['grasa']}, lab: {r: 1, capas: []}, mar: {r: 2, g: 2, capas: ['grasa']}, men: {r: 2, g: 1, capas: ['hueso']}, man: {r: 1, capas: []}};
+  S.precios = {tox: '250', ah: '320', laser: '180', rf: '200'};
+  S.esEjemplo = true;
+}
+window.addEventListener('langchange', () => { if (S.esEjemplo) { const p = S.precios; aplicaEjemplo(); S.precios = p; guarda(); } (RENDER[step] || (() => {}))(); });
+
+(async () => { const p = await cargaEstado(); if (p) { const b = E0(); S = {...S, ...p, pac: {...b.pac, ...(p.pac || {})}, piel: {...b.piel, ...(p.piel || {})}, zonas: p.zonas || {}, plan: {alt: {}, excl: {}, uds: {}, ...(p.plan || {})}, precios: p.precios || {}}; } iniciaUI(); go(0); })();
+
+</script>
+</body></html>

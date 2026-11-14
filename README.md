@@ -4,6 +4,8 @@ Del diagnóstico facial por tercios y por capas a un plan por fases. Aplicación
 
 **Usar la app:** https://fborrasumh.github.io/valoria/
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24214890.svg)](https://doi.org/10.5281/zenodo.24214890)
+
 **Idiomas:** español (por defecto), inglés y portugués. Se cambian con el selector de la barra superior o con `?lang=en` / `?lang=pt` en la URL.
 
 ## Qué hace
@@ -70,7 +72,7 @@ ORCID: Fernando Borrás Rocher [0000-0002-5519-4573](https://orcid.org/0000-0002
 
 ## Cómo citar
 
-Borrás Rocher, F. y Caride Miana, E. (2026). *ValorIA* (v1.0.0) [Software]. (DOI en trámite)
+Borrás Rocher, F. y Caride Miana, E. (2026). *ValorIA* (v1.0.0) [Software]. DOI: [10.5281/zenodo.24214890](https://doi.org/10.5281/zenodo.24214890)
 
 ## Licencia
 
